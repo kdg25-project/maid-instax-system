@@ -28,7 +28,7 @@ export default function Page ({ params }: Props) {
     const [imgData, setImgData] = useState<FormData | null>(null);
     const [showPalette, setShowPalette] = useState(false);
     let apiKey = '';
-    let imgUrl: string | null = '';
+    const [imgUrl, setImgUrl] = useState('');
 
     async function getInstax(apiKey: string): Promise<GetInstaxRes> {
         const { id } = await params
@@ -46,7 +46,7 @@ export default function Page ({ params }: Props) {
         (async () => {
             try {
                 const d = await getInstax(apiKey || '');
-                imgUrl = d.data.image_url
+                setImgUrl(d.data.image_url ?? '')
             } catch (err) {
                 console.error(err);
             }
