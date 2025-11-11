@@ -2,7 +2,6 @@
 
 import {Draw} from "@/components/draw";
 import {useState, useEffect} from "react";
-import Cookies from 'js-cookie';
 
 type Props = {
     params: Promise<{ id: string }>;
@@ -27,7 +26,6 @@ export default function Page ({ params }: Props) {
     const [isSave, setIsSave] = useState(false);
     const [imgData, setImgData] = useState<FormData | null>(null);
     const [showPalette, setShowPalette] = useState(false);
-    let apiKey = '';
     const [imgUrl, setImgUrl] = useState('');
 
     async function getInstax(apiKey: string): Promise<GetInstaxRes> {
@@ -41,7 +39,7 @@ export default function Page ({ params }: Props) {
     }
 
     useEffect (() => {
-        apiKey = String(Cookies.get('maid_api_key'));
+        const apiKey = String(localStorage.getItem("apiKey") || '');
 
         (async () => {
             try {
