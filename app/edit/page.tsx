@@ -11,6 +11,7 @@ export default function Home() {
     const searchParams = useSearchParams()
 
     useEffect(() => {
+        if(!searchParams.get("key")) return;
         localStorage.setItem("apiKey", String(searchParams.get("key") || ""))
     }, [searchParams]);
 
