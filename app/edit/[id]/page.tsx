@@ -2,14 +2,56 @@
 
 import {Draw} from "@/components/draw";
 import {useState, useEffect} from "react";
+import Cookies from 'js-cookie';
 
-export default function Page () {
+type Props = {
+    params: Promise<{ id: string }>;
+}
+
+type GetInstaxRes = {
+    success: boolean;
+    message: string;
+    data: {
+        id: number;
+        user_id: string;
+        maid_id: string;
+        image_url: string | null;
+        created_at: string;
+    }
+}
+
+export default function Page ({ params }: Props) {
     const [penColor, setPenColor] = useState("#fff5f8");
     const [drawOption, setDrawOption] = useState(1);
     const [lineWidth, setLineWidth] = useState(30);
     const [isSave, setIsSave] = useState(false);
     const [imgData, setImgData] = useState<FormData | null>(null);
     const [showPalette, setShowPalette] = useState(false);
+    let apiKey = '';
+    let imgUrl: string | null = '';
+
+    async function getInstax(apiKey: string): Promise<GetInstaxRes> {
+        const { id } = await params
+        const request = await fetch("https://api.kdgn.tech/api/instax/"+String(id), {
+            headers: {
+                "x-api-key": apiKey,
+            }
+        })
+        return request.json()
+    }
+
+    useEffect (() => {
+        apiKey = String(Cookies.get('maid_api_key'));
+
+        (async () => {
+            try {
+                const d = await getInstax(apiKey || '');
+                imgUrl = d.data.image_url
+            } catch (err) {
+                console.error(err);
+            }
+        })();
+    }, [])
 
     const colors = [
         "#fff5f8", // ミルキーホワイト
@@ -28,7 +70,7 @@ export default function Page () {
     return (
         <div>
             <Draw
-            src="/huji.jpeg"
+            src={imgUrl}
             penColor={penColor}
             drawOption={drawOption}
             lineWidth={lineWidth}
