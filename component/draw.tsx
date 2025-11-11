@@ -1,5 +1,5 @@
 "use client";
-import React, { use, useRef, useState, useEffect, Dispatch, SetStateAction } from "react";
+import React, { useRef, useState, useEffect, Dispatch, SetStateAction } from "react";
 
 /*
 -- 説明 --
@@ -9,8 +9,8 @@ import React, { use, useRef, useState, useEffect, Dispatch, SetStateAction } fro
 ----------------
 -- drawOption --
 
-1 = ペン
-2 = 消しゴム
+1 = 消しゴム
+2 = ペン
 3 = グロー
 ----------------
 -- penColor --
@@ -57,14 +57,14 @@ interface Stroke {
     start_y: number;
     end_x: number;
     end_y: number;
-}[];
+};
 
 interface ItemHistory {
     penColor: string;
     drawOption: number;
     lineWidth: number;
     coordinates: Stroke[];
-}[];
+};
 
 export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWidth = 3, isSave, isUndo, isRedo, isClear, setImgData }: DrawProps) => {
     const [viewCanvasSize, setViewCanvasSize] = useState({width:1280, height:720});
@@ -207,7 +207,6 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         }
 
         redoHistoryRef.current.splice(0)
-        strokeRef.current = [];
 
         getCoordinate(e);
         olderX.current.old = x.current;
@@ -234,7 +233,6 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
             lineWidth: lineWidth,
             coordinates: strokeRef.current,
         });
-        console.log(drawOption)
     };
 
     // 描画中
@@ -347,19 +345,16 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         // 履歴から最後の操作を取り出してredo履歴に保存
         if (isUndoed){
-            console.log(historyRef.current)
             const lastAction = historyRef.current.pop();
             if (lastAction) {
                 redoHistoryRef.current.push(lastAction);
             }
-            console.log("undoしたお")
         } else {
-            console.log(redoHistoryRef.current)
             const redoAction = redoHistoryRef.current.pop();
             if (redoAction) {
                 historyRef.current.push(redoAction);
             }
-            console.log("redoしたお")
+
         }
         reDraw(isUndoed);
     }
@@ -373,7 +368,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         clearCanvas();
         // 履歴を元に再描画
         history.forEach((item) => {
-            console.log(item)
+
             penColor = item.penColor;
             drawOption = item.drawOption;
             lineWidth = item.lineWidth;
