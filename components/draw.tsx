@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState, useEffect, Dispatch, SetStateAction } from "react";
+import React, { useRef, useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
 
 /*
 -- 説明 --
@@ -87,6 +87,160 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
     const redoHistoryRef = useRef<ItemHistory[]>([]);
     const strokeRef = useRef<Stroke[]>([]);
 
+    // 画像保存
+    const saveImage = useCallback(() => {
+        const imgCanvas = imgCanvasRef.current;
+        const drawCanvas = canvasRef.current;
+        if (!imgCanvas || !drawCanvas) return;
+
+        // 結合用canvas
+        const mergedCanvas = document.createElement("canvas");
+        mergedCanvas.width = imgSize.width;
+        mergedCanvas.height = imgSize.height;
+        const mergedCtx = mergedCanvas.getContext("2d");
+        if (!mergedCtx) return;
+
+        // 背景画像
+        mergedCtx.drawImage(imgCanvas, 0, 0, mergedCanvas.width, mergedCanvas.height);
+
+        // 描画内容
+        mergedCtx.drawImage(drawCanvas, 0, 0, mergedCanvas.width, mergedCanvas.height);
+
+        // formDataに変換して親コンポーネントに渡す
+        mergedCanvas.toBlob((blob) => {
+            if (!blob) return;
+
+            const formData = new FormData();
+            formData.append("instax", blob, `drawing-${Date.now()}.png`);
+            setImgData(formData);
+
+        }, "image/png");
+    }, [imgSize.width, imgSize.height, setImgData]);
+
+    // 線を描く関数
+    const drawLine = useCallback((
+        ctx: CanvasRenderingContext2D, 
+        x1: number, 
+        y1: number, 
+        x2: number, 
+        y2: number,
+        currentPenColor: string,
+        currentDrawOption: number,
+        currentLineWidth: number
+    ) => {
+        // -----描画オプション-----
+        switch (currentDrawOption) {
+            case 0: // 消しゴム
+                ctx.globalCompositeOperation = "destination-out";
+                ctx.strokeStyle = currentPenColor;
+                break;
+            case 1: // ペン
+                ctx.globalCompositeOperation = "source-over";
+                ctx.strokeStyle = currentPenColor;
+                break;
+            case 2: // グロー
+                ctx.globalCompositeOperation = "source-over";
+                ctx.strokeStyle = "#ffffff";
+                ctx.shadowColor = currentPenColor;
+                ctx.shadowBlur = 2 * currentLineWidth;
+                break;
+            default:
+                ctx.globalCompositeOperation = "source-over";
+        }
+        ctx.lineWidth = currentLineWidth;
+        ctx.lineCap = "round";
+        // ----------------------
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.closePath();
+
+        // グロー効果のために直前の線分も描画
+        if (currentDrawOption === 2) {
+            ctx.shadowBlur = 0; // シャドウ効果をリセット
+            ctx.beginPath();
+            ctx.moveTo(olderX.current.older, olderY.current.older);
+            ctx.lineTo(olderX.current.old, olderY.current.old);
+            ctx.stroke();
+            ctx.closePath();
+        };
+    }, []);
+
+    const clearCanvas = useCallback((isReset = false) => {
+        const canvas = canvasRef.current;
+        const ctx = ctxRef.current;
+        if (!ctx || !canvas) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (isReset) {
+            historyRef.current.splice(0)
+        }
+    }, []);
+
+const reDraw = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!ctx || !canvas) return;
+    const history = historyRef.current;
+
+    clearCanvas();
+    // 履歴を元に再描画
+    history.forEach((item) => {
+        // 履歴に保存された設定値を使用
+        const itemPenColor = item.penColor;
+        const itemDrawOption = item.drawOption;
+        const itemLineWidth = item.lineWidth;
+        
+        item.coordinates.forEach((coord, index) => {
+            // 履歴の設定値を使用
+            if (index % 2 === 1 && itemDrawOption === 2){
+                olderX.current.old = coord.end_x;
+                olderY.current.old = coord.end_y;
+
+                olderX.current.older = coord.start_x;
+                olderY.current.older = coord.start_y;
+            } else {
+                // 履歴の設定値を渡す
+                drawLine(
+                    ctx, 
+                    coord.start_x, 
+                    coord.start_y, 
+                    coord.end_x, 
+                    coord.end_y, 
+                    itemPenColor,      // ✅ 履歴の値を使用
+                    itemDrawOption,    // ✅ 履歴の値を使用
+                    itemLineWidth      // ✅ 履歴の値を使用
+                );
+            }
+        })
+    })
+}, [clearCanvas, drawLine]);
+
+    const undoRedo = useCallback((isUndoed: boolean) => {
+        const canvas = canvasRef.current;
+        const ctx = ctxRef.current;
+        if (!ctx || !canvas) return;
+        
+        // 描画内容をクリア
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 履歴から最後の操作を取り出してredo履歴に保存
+        if (isUndoed){
+            const lastAction = historyRef.current.pop();
+            if (lastAction) {
+                redoHistoryRef.current.push(lastAction);
+            }
+        } else {
+            const redoAction = redoHistoryRef.current.pop();
+            if (redoAction) {
+                historyRef.current.push(redoAction);
+            }
+
+        }
+        reDraw();
+    }, [reDraw]);
+
     useEffect(() => {
         // タッチムーブイベントを無効化
         // passive: false で preventDefault() を有効化
@@ -113,33 +267,37 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
 
         ctxRef.current = ctx;
 
-
         const imgCanvas = imgCanvasRef.current;
         if (!imgCanvas) return;
         const imgCtx = imgCanvas.getContext("2d");
         if (!imgCtx) return;
 
+        clearCanvas(true)
         const img = new Image();
+        // クロスオリジンの画像をキャンバスに描画してエクスポートしたい場合は
+        // crossOrigin を設定する必要があります（サーバ側で CORS 許可が必要）。
+        img.crossOrigin = "anonymous";
         img.src = src;
         img.onload = () => {
             // 画像のアスペクト比を維持して表示サイズを計算
             const imgWidth = img.width;
             const imgHeight = img.height;
+            img.onerror = (e) => {
+                console.error("Failed to load image for canvas:", src, e);
+            };
             setImgSize({width: imgWidth, height: imgHeight});
             let finalWidth = 1280;
             let finalHeight = 720;
-            let maxWidth = window.innerWidth - 200;
-            let maxHeight = window.innerHeight - 200;
+            const maxWidth = window.innerWidth - 200;
+            const maxHeight = window.innerHeight - 200;
 
             if (imgHeight > maxHeight) {
                 finalHeight = maxHeight;
                 finalWidth = (imgWidth / imgHeight) * finalHeight;
-            } else if (finalWidth > maxWidth) {
+            } 
+            if (finalWidth > maxWidth) {
                 finalWidth = maxWidth;
                 finalHeight = (imgHeight / imgWidth) * finalWidth;
-            } else {
-                finalWidth = imgWidth;
-                finalHeight = imgHeight;
             }
 
             setViewCanvasSize({width: finalWidth, height: finalHeight});
@@ -147,26 +305,26 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
             // 画像をcanvasに描画
             imgCtx.drawImage(img, 0, 0, imgCanvas.width, imgCanvas.height);
         };
-    }, []);
+    }, [src, clearCanvas]);
 
     // セーブ、クリア、undo、redo用のuseEffect
     useEffect(() => {
         if (isSave) {
             saveImage();
         }
-    }, [isSave]);
+    }, [isSave, saveImage]);
 
     useEffect(() => {
         clearCanvas(true)
-    }, [isClear])
+    }, [isClear, clearCanvas])
 
     useEffect(() => {
         undoRedo(true)
-    }, [isUndo])
+    }, [isUndo, undoRedo])
 
     useEffect(() => {
         undoRedo(false)
-    }, [isRedo])
+    }, [isRedo, undoRedo])
 
     const getCoordinate = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
         const canvas = canvasRef.current;
@@ -245,7 +403,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
 
         getCoordinate(e);
 
-        drawLine(ctx, olderX.current.old, olderY.current.old, x.current, y.current);
+        drawLine(ctx, olderX.current.old, olderY.current.old, x.current, y.current, penColor, drawOption, lineWidth);
         strokeRef.current.push({
             start_x: olderX.current.old,
             start_y: olderY.current.old,
@@ -262,140 +420,6 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
             });
         }
     };
-
-    // 線を描く関数
-    function drawLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) {
-
-        // -----描画オプション-----
-        switch (drawOption) {
-            case 0: // 消しゴム
-                ctx.globalCompositeOperation = "destination-out";
-                ctx.strokeStyle = penColor;
-                break;
-            case 1: // ペン
-                ctx.globalCompositeOperation = "source-over";
-                ctx.strokeStyle = penColor;
-                break;
-            case 2: // グロー
-                ctx.globalCompositeOperation = "source-over";
-                ctx.strokeStyle = "#ffffff";
-                ctx.shadowColor = penColor;
-                ctx.shadowBlur = 2 * lineWidth;
-                break;
-            default:
-                ctx.globalCompositeOperation = "source-over";
-        }
-        ctx.lineWidth = lineWidth;
-        ctx.lineCap = "round";
-        // ----------------------
-
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-        ctx.closePath();
-
-        // グロー効果のために直前の線分も描画
-        if (drawOption === 2) {
-            ctx.shadowBlur = 0; // シャドウ効果をリセット
-            ctx.beginPath();
-            ctx.moveTo(olderX.current.older, olderY.current.older);
-            ctx.lineTo(olderX.current.old, olderY.current.old);
-            ctx.stroke();
-            ctx.closePath();
-        };
-    };
-
-    // 画像保存
-    const saveImage = () => {
-        const imgCanvas = imgCanvasRef.current;
-        const drawCanvas = canvasRef.current;
-        if (!imgCanvas || !drawCanvas) return;
-
-        // 結合用canvas
-        const mergedCanvas = document.createElement("canvas");
-        mergedCanvas.width = imgSize.width;
-        mergedCanvas.height = imgSize.height;
-        const mergedCtx = mergedCanvas.getContext("2d");
-        if (!mergedCtx) return;
-
-        // 背景画像
-        mergedCtx.drawImage(imgCanvas, 0, 0, mergedCanvas.width, mergedCanvas.height);
-
-        // 描画内容
-        mergedCtx.drawImage(drawCanvas, 0, 0, mergedCanvas.width, mergedCanvas.height);
-
-        // formDataに変換して親コンポーネントに渡す
-        mergedCanvas.toBlob((blob) => {
-            if (!blob) return;
-
-            const formData = new FormData();
-            formData.append("image", blob, `drawing-${Date.now()}.png`);
-            setImgData(formData);
-
-        }, "image/png");
-    };
-    
-    const undoRedo = (isUndoed: boolean) => {
-        const canvas = canvasRef.current;
-        const ctx = ctxRef.current;
-        if (!ctx || !canvas) return;
-        
-        // 描画内容をクリア
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // 履歴から最後の操作を取り出してredo履歴に保存
-        if (isUndoed){
-            const lastAction = historyRef.current.pop();
-            if (lastAction) {
-                redoHistoryRef.current.push(lastAction);
-            }
-        } else {
-            const redoAction = redoHistoryRef.current.pop();
-            if (redoAction) {
-                historyRef.current.push(redoAction);
-            }
-
-        }
-        reDraw(isUndoed);
-    }
-
-    const reDraw = (isUndoed: boolean) => {
-        const canvas = canvasRef.current;
-        const ctx = ctxRef.current;
-        if (!ctx || !canvas) return;
-        const history = historyRef.current;
-
-        clearCanvas();
-        // 履歴を元に再描画
-        history.forEach((item) => {
-
-            penColor = item.penColor;
-            drawOption = item.drawOption;
-            lineWidth = item.lineWidth;
-            item.coordinates.forEach((coord, index) => {
-                if (index % 2 === 1 && drawOption === 2){
-                    olderX.current.old = coord.end_x;
-                    olderY.current.old = coord.end_y;
-
-                    olderX.current.older = coord.start_x;
-                    olderY.current.older = coord.start_y;
-                } else {
-                    drawLine(ctx, coord.start_x, coord.start_y, coord.end_x, coord.end_y)
-                }
-            })
-        })
-    }
-
-    const clearCanvas = (isReset = false) => {
-        const canvas = canvasRef.current;
-        const ctx = ctxRef.current;
-        if (!ctx || !canvas) return;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (isReset) {
-            historyRef.current.splice(0)
-        }
-    }
 
     return (
         <div className={className}>
