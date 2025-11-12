@@ -35,7 +35,7 @@ export default async function Page({ params }: Props) {
         <div>
             
             <div className="fixed bottom-0 bg-[#FFE8E9] w-full h-50">
-                <p className="text-brack text-[32px] font-bold pt-[40] text-center">行ってらっしゃいませ</p>
+                <p className="text-black text-[32px] font-bold pt-[40] text-center">行ってらっしゃいませ</p>
                 <div className="w-full flex justify-center font-bold text-[32px] gap-2">
                     <p className="text-[#0055FF]">ご主人様</p>
                     <p className="text-black">/</p>
