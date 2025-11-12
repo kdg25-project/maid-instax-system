@@ -52,7 +52,6 @@ export default function Page({ params }: Props) {
                 const { id } = await params;
                 setInstaxId(id);
                 const d = await getInstax(apiKey || '', id);
-                console.log(d)
                 setImgUrl(d.data.image_url ?? '')
             } catch (err) {
                 console.error(err);
@@ -167,7 +166,6 @@ export default function Page({ params }: Props) {
                     onClick={() => {
                         setIsSave(true);
                         setShowDialog(true);
-                        console.log("保存ボタン押下");
                     }}
                 >
                     できた
