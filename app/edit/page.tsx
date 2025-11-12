@@ -1,17 +1,27 @@
 "use client";
-import Image from "next/image";
-
 import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
+import { useSearchParams } from 'next/navigation'
 
 export default function Home() {
     const [id, setId] = useState(0);
     const [isError, setIsError] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams()
+
+    useEffect(() => {
+        if(!searchParams.get("key")) return;
+        localStorage.setItem("apiKey", String(searchParams.get("key") || ""))
+    }, [searchParams]);
 
     async function handleSubmit() {
-        const request = await fetch("https://api.kdgn.tech/api/instax/"+String(id))
+        const request = await fetch("https://api.kdgn.tech/api/instax/"+String(id),
+    {
+        headers: {
+            "x-api-key": localStorage.getItem("apiKey") || ""
+        }
+    })
         if (request.ok) {
             router.push("/edit/"+String(id));
         } else {

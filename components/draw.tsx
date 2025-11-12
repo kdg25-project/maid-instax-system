@@ -315,11 +315,17 @@ const reDraw = useCallback(() => {
 
         clearCanvas(true);
         const img = new Image();
+        // クロスオリジンの画像をキャンバスに描画してエクスポートしたい場合は
+        // crossOrigin を設定する必要があります（サーバ側で CORS 許可が必要）。
+        img.crossOrigin = "anonymous";
         img.src = src;
         img.onload = () => {
             // 画像のアスペクト比を維持して表示サイズを計算
             const imgWidth = img.width;
             const imgHeight = img.height;
+            img.onerror = (e) => {
+                console.error("Failed to load image for canvas:", src, e);
+            };
             setImgSize({width: imgWidth, height: imgHeight});
             let finalWidth = 1280;
             let finalHeight = 720;
