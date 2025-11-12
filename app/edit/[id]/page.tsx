@@ -5,6 +5,7 @@ import { saveInstax } from "@/api/instax-save";
 
 import { useState, useEffect } from "react";
 
+
 type Props = {
     params: Promise<{ id: string }>;
 }
@@ -40,6 +41,7 @@ export default function Page({ params }: Props) {
                 "x-api-key": apiKey,
             }
         })
+        // console.log(request.json())
         return request.json()
     }
 
@@ -49,6 +51,7 @@ export default function Page({ params }: Props) {
         (async () => {
             try {
                 const d = await getInstax(apiKey || '');
+                console.log(d)
                 setImgUrl(d.data.image_url ?? '')
             } catch (err) {
                 console.error(err);
