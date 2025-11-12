@@ -42,7 +42,7 @@ interface DrawProps {
     className?: string;
     src: string;
     penColor?: string;
-    drawOption: 0 | 1 | 2;
+    drawOption: number;
     lineWidth: number;
     isSave: boolean;
     isUndo?: boolean;
