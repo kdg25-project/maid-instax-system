@@ -50,8 +50,13 @@ export default function SaveConfirmDialog({ imgData, instaxId, open, onOpenChang
     }
 	}
 
+	// If parent doesn't control open state (open === undefined), show dialog by default when mounted.
+	const dialogProps = open === undefined
+		? { defaultOpen: true }
+		: { open, onOpenChange };
+
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
+		<Dialog {...dialogProps}>
 			<DialogContent>
 			<DialogHeader>
 				<DialogTitle>保存しますか？</DialogTitle>

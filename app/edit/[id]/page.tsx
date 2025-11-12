@@ -77,13 +77,13 @@ export default function Page({ params }: Props) {
 
     return (
         <div>
-            {showDialog && (
-                <SaveConfirmDialog
-                    imgData={imgData}
-                    instaxId={instaxId}
-                    onClose={() => setShowDialog(false)}
-                />
-            )}
+            <SaveConfirmDialog
+                open={showDialog}
+                onOpenChange={setShowDialog}
+                imgData={imgData}
+                instaxId={instaxId}
+                onClose={() => setShowDialog(false)}
+            />
             <Draw
                 src={imgUrl}
                 penColor={penColor}
@@ -168,6 +168,7 @@ export default function Page({ params }: Props) {
                     onClick={() => {
                         setIsSave(true);
                         setShowDialog(true);
+                        console.log("保存ボタン押下");
                     }}
                 >
                     できた
