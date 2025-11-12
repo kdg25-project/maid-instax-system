@@ -168,6 +168,31 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         };
     }, []);
 
+    // グローペンの時に、一度シャドウ以外の線を削除し中央の線のみ再描画
+    const historyReDraw = (
+        ctx: CanvasRenderingContext2D,
+        history: ItemHistory[],
+    ) => {
+        ctx.strokeStyle = "white"
+        ctx.lineCap = "round"
+        ctx.globalCompositeOperation = "destination-out"
+
+        history.forEach((item) => {
+            ctx.lineWidth = item.lineWidth
+
+            item.coordinates.forEach((coord) => {
+                for (let i = 0; i = 0; i++){
+                    ctx.beginPath();
+                    ctx.moveTo(coord.start_x, coord.start_y);
+                    ctx.lineTo(coord.end_x, coord.end_y);
+                    ctx.stroke();
+                    ctx.closePath();
+                    ctx.globalCompositeOperation = "source-over";
+                };
+            });
+        });
+    }
+
     const clearCanvas = useCallback((isReset = false) => {
         const canvas = canvasRef.current;
         const ctx = ctxRef.current;
@@ -373,6 +398,9 @@ const reDraw = useCallback(() => {
     // 描画終了
     const handleEnd = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
         isDrawingRef.current = false;
+        const canvas = canvasRef.current;
+        const ctx = ctxRef.current;
+        if (!ctx || !canvas) return;
 
         if ('touches' in e) {
             e.preventDefault();
@@ -385,6 +413,9 @@ const reDraw = useCallback(() => {
             lineWidth: lineWidth,
             coordinates: strokeRef.current,
         });
+        if (drawOption === 2) {
+            historyReDraw(ctx, historyRef.current);
+        };
     };
 
     // 描画中
@@ -404,15 +435,6 @@ const reDraw = useCallback(() => {
             end_x: x.current,
             end_y: y.current,
         });
-        if (drawOption === 2) {
-            // グローの場合、直前の線分も描画
-            strokeRef.current.push({
-                start_x: olderX.current.older,
-                start_y: olderY.current.older,
-                end_x: olderX.current.old,
-                end_y: olderY.current.old,
-            });
-        }
     };
 
     return (
