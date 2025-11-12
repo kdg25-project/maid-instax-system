@@ -5,7 +5,7 @@ type SaveInstaxRequest = {
 
 type SaveInstaxResponse = {
     success: true;
-    messeage: string;
+    message: string;
     data: {
         id: number;
         user_id: string;
