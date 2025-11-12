@@ -1,7 +1,9 @@
 "use client";
 
-import {Draw} from "@/components/draw";
-import {useState, useEffect} from "react";
+import { Draw } from "@/components/draw";
+import { saveInstax } from "@/api/instax-save";
+
+import { useState, useEffect } from "react";
 
 type Props = {
     params: Promise<{ id: string }>;
@@ -19,18 +21,21 @@ type GetInstaxRes = {
     }
 }
 
-export default function Page ({ params }: Props) {
+export default function Page({ params }: Props) {
     const [penColor, setPenColor] = useState("#fff5f8");
     const [drawOption, setDrawOption] = useState(1);
     const [lineWidth, setLineWidth] = useState(30);
     const [isSave, setIsSave] = useState(false);
+    const [isUndo, setIsUndo] = useState(false);
+    const [isRedo, setIsRedo] = useState(false);
+    const [isClear, setIsClear] = useState(false);
     const [imgData, setImgData] = useState<FormData | null>(null);
     const [showPalette, setShowPalette] = useState(false);
     const [imgUrl, setImgUrl] = useState('');
 
     async function getInstax(apiKey: string): Promise<GetInstaxRes> {
         const { id } = await params
-        const request = await fetch("https://api.kdgn.tech/api/instax/"+String(id), {
+        const request = await fetch("https://api.kdgn.tech/api/instax/" + String(id), {
             headers: {
                 "x-api-key": apiKey,
             }
@@ -38,7 +43,7 @@ export default function Page ({ params }: Props) {
         return request.json()
     }
 
-    useEffect (() => {
+    useEffect(() => {
         const apiKey = String(localStorage.getItem("apiKey") || '');
 
         (async () => {
@@ -68,16 +73,19 @@ export default function Page ({ params }: Props) {
     return (
         <div>
             <Draw
-            src={imgUrl}
-            penColor={penColor}
-            drawOption={drawOption}
-            lineWidth={lineWidth}
-            isSave={isSave}
-            setImgData={setImgData}
+                src={imgUrl}
+                penColor={penColor}
+                drawOption={drawOption}
+                lineWidth={lineWidth}
+                isSave={isSave}
+                isUndo={isUndo}
+                isRedo={isRedo}
+                isClear={isClear}
+                setImgData={setImgData}
             ></Draw>
 
             <div
-            className="flex gap-4">
+                className="flex gap-4">
                 <button
                     className="p-2 py-8 rounded-xl bg-pink-300 text-black"
                     onClick={() => setShowPalette((prev) => !prev)}
@@ -89,28 +97,28 @@ export default function Page ({ params }: Props) {
                     <div className="grid grid-cols-6 gap-x-0 gap-3">
                         {colors.map((color) => (
                             <button
-                            key={color}
-                            onClick={() => setPenColor(color)}
-                            className={`
+                                key={color}
+                                onClick={() => setPenColor(color)}
+                                className={`
                                 w-8 h-8 rounded-full border
                                 ${penColor === color ? "border-4 border-gray-700" : "border-gray-400"}
                                 `}
-                            style={{backgroundColor:color}}
+                                style={{ backgroundColor: color }}
                             />
                         ))}
                         <input
-                        type="color"
-                        value={penColor}
-                        onChange={(e) => setPenColor(e.target.value)}
-                        className="w-8 h-8 rounded-full border"
+                            type="color"
+                            value={penColor}
+                            onChange={(e) => setPenColor(e.target.value)}
+                            className="w-8 h-8 rounded-full border"
                         />
                     </div>
                 )}
 
                 <select
-                name="drawoption"
-                value={drawOption}
-                onChange={(e) => setDrawOption(Number(e.target.value))}
+                    name="drawoption"
+                    value={drawOption}
+                    onChange={(e) => setDrawOption(Number(e.target.value))}
                 >
                     <option value="0">消しゴム</option>
                     <option value="1">ペン</option>
@@ -118,18 +126,36 @@ export default function Page ({ params }: Props) {
                 </select>
 
                 <input
-                type="range"
-                min="0"
-                max="100"
-                value={lineWidth}
-                onChange={(e) => setLineWidth(Number(e.target.value))}
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={lineWidth}
+                    onChange={(e) => setLineWidth(Number(e.target.value))}
                 />
 
                 <button
-                className="p-2 py-8 rounded-xl bg-pink-300 text-black"
-                onClick={() => {
-                    setIsSave(true);
-                }}
+                    className="p-2 py-2 rounded-xl bg-pink-300 text-black"
+                    onClick={() => {
+                        setIsUndo(!isUndo);
+                    }}
+                >
+                    戻る
+                </button>
+
+                <button
+                    className="p-2 py-2 rounded-xl bg-pink-300 text-black"
+                    onClick={() => {
+                        setIsRedo(!isRedo);
+                    }}
+                >
+                    前へ
+                </button>
+
+                <button
+                    className="p-2 py-2 rounded-xl bg-pink-300 text-black"
+                    onClick={() => {
+                        setIsSave(true);
+                    }}
                 >
                     できた
                 </button>
