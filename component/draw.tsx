@@ -153,9 +153,10 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
 
         // 線分の長さを計算
         const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        const MIN_MOVE_DISTANCE = 4;
 
-        if (distance <= 4) {
-            ctx.shadowBlur = 0
+        if (distance <= MIN_MOVE_DISTANCE) {
+            ctx.shadowBlur = 0;
         }
         ctx.beginPath();
         ctx.moveTo(x1, y1);
@@ -175,21 +176,21 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
     }, []);
 
     // グローペンの時に、一度シャドウ以外の線を削除し中央の線のみ再描画
-    const historyReDraw = (
+    const historyReDraw = useCallback((
         ctx: CanvasRenderingContext2D,
         history: ItemHistory[],
     ) => {
-        ctx.strokeStyle = "white"
-        ctx.lineCap = "round"
-        ctx.globalCompositeOperation = "destination-out"
-        ctx.shadowBlur = 0
-
+        ctx.strokeStyle = "white";
+        ctx.lineCap = "round";
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.shadowBlur = 0;
+        
+        const old_op = ctx.globalCompositeOperation
         const item = history.at(-1);
 
         if (item) {
-            ctx.lineWidth = item.lineWidth
+            ctx.lineWidth = item.lineWidth;
             item.coordinates.forEach((coord) => {
-                console.log("forの前までは実行されてます")
 
                 ctx.beginPath();
                 ctx.moveTo(coord.start_x, coord.start_y);
@@ -197,15 +198,16 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
                 ctx.stroke();
                 ctx.closePath();
                 ctx.globalCompositeOperation = "source-over";
-                ctx.lineWidth = item.lineWidth - 1
+                ctx.lineWidth = item.lineWidth;
                 ctx.beginPath();
                 ctx.moveTo(coord.start_x, coord.start_y);
                 ctx.lineTo(coord.end_x, coord.end_y);
                 ctx.stroke();
                 ctx.closePath();
             });
-        }
-    };
+            ctx.globalCompositeOperation = old_op;
+        };
+    }, []);
 
     const clearCanvas = useCallback((isReset = false) => {
         const canvas = canvasRef.current;
@@ -214,8 +216,8 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (isReset) {
-            historyRef.current.splice(0)
-        }
+            historyRef.current.splice(0);
+        };
     }, []);
 
 const reDraw = useCallback(() => {
@@ -248,13 +250,13 @@ const reDraw = useCallback(() => {
                     coord.start_y, 
                     coord.end_x, 
                     coord.end_y, 
-                    itemPenColor,      // ✅ 履歴の値を使用
-                    itemDrawOption,    // ✅ 履歴の値を使用
-                    itemLineWidth      // ✅ 履歴の値を使用
+                    itemPenColor,
+                    itemDrawOption, 
+                    itemLineWidth   
                 );
-            }
-        })
-    })
+            };
+        });
+    });
 }, [clearCanvas, drawLine]);
 
     const undoRedo = useCallback((isUndoed: boolean) => {
@@ -311,7 +313,7 @@ const reDraw = useCallback(() => {
         const imgCtx = imgCanvas.getContext("2d");
         if (!imgCtx) return;
 
-        clearCanvas(true)
+        clearCanvas(true);
         const img = new Image();
         img.src = src;
         img.onload = () => {
@@ -323,6 +325,9 @@ const reDraw = useCallback(() => {
             let finalHeight = 720;
             const maxWidth = window.innerWidth - 200;
             const maxHeight = window.innerHeight - 200;
+
+            finalWidth = imgWidth;
+            finalHeight = imgHeight;
 
             if (imgHeight > maxHeight) {
                 finalHeight = maxHeight;
@@ -428,7 +433,6 @@ const reDraw = useCallback(() => {
             coordinates: strokeRef.current,
         });
         if (drawOption === 2) {
-            console.log("現在グロー")
             historyReDraw(ctx, historyRef.current);
         };
     };
