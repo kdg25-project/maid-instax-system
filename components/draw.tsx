@@ -42,7 +42,7 @@ interface DrawProps {
     className?: string;
     src: string;
     penColor?: string;
-    drawOption: number;
+    drawOption: 0 | 1 | 2;
     lineWidth: number;
     isSave: boolean;
     isUndo?: boolean;
@@ -179,29 +179,44 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         }
     }, []);
 
-    const reDraw = useCallback(() => {
-        const canvas = canvasRef.current;
-        const ctx = ctxRef.current;
-        if (!ctx || !canvas) return;
-        const history = historyRef.current;
+const reDraw = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!ctx || !canvas) return;
+    const history = historyRef.current;
 
-        clearCanvas();
-        // 履歴を元に再描画
-        history.forEach((item) => {
+    clearCanvas();
+    // 履歴を元に再描画
+    history.forEach((item) => {
+        // 履歴に保存された設定値を使用
+        const itemPenColor = item.penColor;
+        const itemDrawOption = item.drawOption;
+        const itemLineWidth = item.lineWidth;
+        
+        item.coordinates.forEach((coord, index) => {
+            // 履歴の設定値を使用
+            if (index % 2 === 1 && itemDrawOption === 2){
+                olderX.current.old = coord.end_x;
+                olderY.current.old = coord.end_y;
 
-            item.coordinates.forEach((coord, index) => {
-                if (index % 2 === 1 && drawOption === 2){
-                    olderX.current.old = coord.end_x;
-                    olderY.current.old = coord.end_y;
-
-                    olderX.current.older = coord.start_x;
-                    olderY.current.older = coord.start_y;
-                } else {
-                    drawLine(ctx, coord.start_x, coord.start_y, coord.end_x, coord.end_y, penColor, drawOption, lineWidth)
-                }
-            })
+                olderX.current.older = coord.start_x;
+                olderY.current.older = coord.start_y;
+            } else {
+                // 履歴の設定値を渡す
+                drawLine(
+                    ctx, 
+                    coord.start_x, 
+                    coord.start_y, 
+                    coord.end_x, 
+                    coord.end_y, 
+                    itemPenColor,      // ✅ 履歴の値を使用
+                    itemDrawOption,    // ✅ 履歴の値を使用
+                    itemLineWidth      // ✅ 履歴の値を使用
+                );
+            }
         })
-    }, [clearCanvas, drawLine, penColor, drawOption, lineWidth]);
+    })
+}, [clearCanvas, drawLine]);
 
     const undoRedo = useCallback((isUndoed: boolean) => {
         const canvas = canvasRef.current;
@@ -284,7 +299,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
             // 画像をcanvasに描画
             imgCtx.drawImage(img, 0, 0, imgCanvas.width, imgCanvas.height);
         };
-    }, [src, clearCanvas, setImgData]);
+    }, [src, clearCanvas]);
 
     // セーブ、クリア、undo、redo用のuseEffect
     useEffect(() => {
