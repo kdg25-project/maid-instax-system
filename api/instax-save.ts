@@ -23,15 +23,15 @@ export async function saveInstax(requestData: SaveInstaxRequest): Promise<SaveIn
     try {
         const apiKey = localStorage.getItem("apiKey") || ""
 
-        const FormData = requestData.image_file;
-        FormData.append("instax_id", String(requestData.instax_id));
+        const formData = requestData.image_file;
+        formData.append("instax_id", String(requestData.instax_id));
 
         const response = await fetch(apiUrl, {
             method: "PATCH",
             headers: {
                 "x-api-key": apiKey,
             },
-            body: FormData,
+            body: formData,
         });
 
         const data = await response.json();
