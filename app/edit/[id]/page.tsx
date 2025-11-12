@@ -40,8 +40,7 @@ export default function Page({ params }: Props) {
             headers: {
                 "x-api-key": apiKey,
             }
-        })
-        // console.log(request.json())
+        });
         return request.json()
     }
 
