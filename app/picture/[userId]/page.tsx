@@ -1,45 +1,34 @@
 import Image from "next/image";
-import type { InstaxShowResponse } from "@/api/instax-show";
+import { fetchInstaxImage } from "@/api/instax-show";
 
 type Props = {
     params: Promise<{ userId: string }>;
 };
 
-async function fetchInstaxImage(userId: string): Promise<string> {
-    try {
-        const apiUrl = `https://api.kdgn.tech/api/users/${userId}/instax`;
-        const response = await fetch(apiUrl, {
-            method: "GET",
-            headers: {
-                "x-api-key": process.env.API_KEY || ""
-            },
-        });
-        
-        const data: InstaxShowResponse = await response.json();
-        
-        if (data.success) {
-            return data.data.image_url;
-        } else {
-            return "/error.png";
-        }
-    } catch (err) {
-        console.error(err);
-        return "/error.png";
-    }
+async function getUser(userId: string) {
+    const res = await fetch(`https://api.kdgn.tech/api/users/${userId}`, {
+        method: "GET",
+    });
+    return res.json();
 }
 
 export default async function Page({ params }: Props) {
     const { userId } = await params;
     const imagesrc = await fetchInstaxImage(userId);
+    const user = await getUser(userId);
     return (
         <div>
             
             <div className="fixed bottom-0 bg-[#FFE8E9] w-full h-50">
                 <p className="text-black text-[32px] font-bold pt-[40] text-center">行ってらっしゃいませ</p>
                 <div className="w-full flex justify-center font-bold text-[32px] gap-2">
-                    <p className="text-[#0055FF]">ご主人様</p>
-                    <p className="text-black">/</p>
-                    <p className="text-[#FF00D9]">お嬢様</p>
+                    { user.data.honorific == "ご主人様" ? (
+                        <p className="text-[#0055FF]">{user.data.name}ご主人様</p>
+                    ) : (user.data.honorific == "お嬢様") ? (
+                        <p className="text-[#FF00D9]">{user.data.name}お嬢様</p>
+                    ) : (
+                        <p className="text-black">{user.data.name}</p>
+                    ) }
                 </div>
             </div>
 

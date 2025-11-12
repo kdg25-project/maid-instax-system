@@ -28,3 +28,23 @@ export function instaxShow(userId: string): Promise<InstaxShowResponse> {
             };
         })
 }
+
+export async function fetchInstaxImage(userId: string): Promise<string> {
+    try {
+        const apiUrl = `https://api.kdgn.tech/api/users/${userId}/instax`;
+        const response = await fetch(apiUrl, {
+            method: "GET",
+        });
+        
+        const data: InstaxShowResponse = await response.json();
+        
+        if (data.success) {
+            return data.data.image_url;
+        } else {
+            return "/error.png";
+        }
+    } catch (err) {
+        console.error(err);
+        return "/error.png";
+    }
+}
