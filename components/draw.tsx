@@ -121,6 +121,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         clearCanvas(true)
 
         const img = new Image();
+        img.crossOrigin = "anonymous";
         img.src = src;
         img.onload = () => {
             // 画像のアスペクト比を維持して表示サイズを計算
@@ -135,12 +136,10 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
             if (imgHeight > maxHeight) {
                 finalHeight = maxHeight;
                 finalWidth = (imgWidth / imgHeight) * finalHeight;
-            } else if (finalWidth > maxWidth) {
+            } 
+            if (finalWidth > maxWidth) {
                 finalWidth = maxWidth;
                 finalHeight = (imgHeight / imgWidth) * finalWidth;
-            } else {
-                finalWidth = imgWidth;
-                finalHeight = imgHeight;
             }
 
             setViewCanvasSize({width: finalWidth, height: finalHeight});
