@@ -35,9 +35,9 @@ export default async function Page({ params }: Props) {
                 </div>
             </div>
             
-                <div className="w-full h-[calc(100vh-364px)] mt-[164px] relative">
-                    <Image src="/image.png" alt="チェキ画像" fill className="object-contain bg-[#FFE8E9]" />
-                </div>
+            <div className="w-full h-[calc(100vh-364px)] mt-[164px]">
+                <Image src={imagesrc} alt="チェキ画像" fill className="object-contain bg-[#FFE8E9]"/>
+            </div>
         </div>
     );
 }
