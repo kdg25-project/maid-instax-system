@@ -111,7 +111,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
             if (!blob) return;
 
             const formData = new FormData();
-            formData.append("image", blob, `drawing-${Date.now()}.png`);
+            formData.append("instax", blob, `drawing-${Date.now()}.png`);
             setImgData(formData);
 
         }, "image/png");
