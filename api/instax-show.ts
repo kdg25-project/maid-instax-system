@@ -14,8 +14,10 @@ export type InstaxShowResponse = {
 }
 
 export function instaxShow(userId: string): Promise<InstaxShowResponse> {
-    const apiUrl = `https://api.kdgn.tech/api/users/${userId}/instax`;
-    return fetch(apiUrl)
+    const apiUrl = `/api/instax/${userId}`;
+    return fetch(apiUrl, {
+        method: "GET",
+    })
         .then((res) => res.json())
         .catch((err) => {
             console.warn(err);

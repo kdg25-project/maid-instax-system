@@ -1,19 +1,36 @@
 import Image from "next/image";
-import { instaxShow } from "@/api/instax-show";
+import type { InstaxShowResponse } from "@/api/instax-show";
 
 type Props = {
     params: Promise<{ userId: string }>;
 };
 
-export default async function Page({ params }: Props) {
-    const { userId } = await params;
-    const imagesrc = await instaxShow(userId).then((res) => {
-        if (res.success) {
-            return res.data.image_url;
+async function fetchInstaxImage(userId: string): Promise<string> {
+    try {
+        const apiUrl = `https://api.kdgn.tech/api/users/${userId}/instax`;
+        const response = await fetch(apiUrl, {
+            method: "GET",
+            headers: {
+                "x-api-key": process.env.API_KEY || ""
+            },
+        });
+        
+        const data: InstaxShowResponse = await response.json();
+        
+        if (data.success) {
+            return data.data.image_url;
         } else {
             return "/error.png";
         }
-    });
+    } catch (err) {
+        console.error(err);
+        return "/error.png";
+    }
+}
+
+export default async function Page({ params }: Props) {
+    const { userId } = await params;
+    const imagesrc = await fetchInstaxImage(userId);
     return (
         <div>
             
