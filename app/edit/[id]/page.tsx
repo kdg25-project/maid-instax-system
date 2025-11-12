@@ -1,9 +1,8 @@
 "use client";
 
 import { Draw } from "@/components/draw";
-import { saveInstax } from "@/api/instax-save";
-
 import { useState, useEffect } from "react";
+import SaveConfirmDialog from "@/components/save-confirm-dialog";
 
 
 type Props = {
@@ -31,11 +30,12 @@ export default function Page({ params }: Props) {
     const [isRedo, setIsRedo] = useState(false);
     const [isClear, setIsClear] = useState(false);
     const [imgData, setImgData] = useState<FormData | null>(null);
+    const [showDialog, setShowDialog] = useState(false);
     const [showPalette, setShowPalette] = useState(false);
     const [imgUrl, setImgUrl] = useState('');
+    const [instaxId, setInstaxId] = useState<string>('');
 
-    async function getInstax(apiKey: string): Promise<GetInstaxRes> {
-        const { id } = await params
+    async function getInstax(apiKey: string, id: string): Promise<GetInstaxRes> {
         const request = await fetch("https://api.kdgn.tech/api/instax/" + String(id), {
             headers: {
                 "x-api-key": apiKey,
@@ -50,14 +50,16 @@ export default function Page({ params }: Props) {
 
         (async () => {
             try {
-                const d = await getInstax(apiKey || '');
+                const { id } = await params;
+                setInstaxId(id);
+                const d = await getInstax(apiKey || '', id);
                 console.log(d)
                 setImgUrl(d.data.image_url ?? '')
             } catch (err) {
                 console.error(err);
             }
         })();
-    }, [])
+    }, [params])
 
     const colors = [
         "#fff5f8", // ミルキーホワイト
@@ -75,6 +77,13 @@ export default function Page({ params }: Props) {
 
     return (
         <div>
+            {showDialog && (
+                <SaveConfirmDialog
+                    imgData={imgData}
+                    instaxId={instaxId}
+                    onClose={() => setShowDialog(false)}
+                />
+            )}
             <Draw
                 src={imgUrl}
                 penColor={penColor}
@@ -158,6 +167,7 @@ export default function Page({ params }: Props) {
                     className="p-2 py-2 rounded-xl bg-pink-300 text-black"
                     onClick={() => {
                         setIsSave(true);
+                        setShowDialog(true);
                     }}
                 >
                     できた
