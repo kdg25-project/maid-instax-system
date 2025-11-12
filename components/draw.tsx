@@ -111,7 +111,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
             if (!blob) return;
 
             const formData = new FormData();
-            formData.append("instax", blob, `drawing-${Date.now()}.png`);
+            formData.append("image", blob, `drawing-${Date.now()}.png`);
             setImgData(formData);
 
         }, "image/png");
@@ -142,7 +142,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
                 ctx.globalCompositeOperation = "source-over";
                 ctx.strokeStyle = "#ffffff";
                 ctx.shadowColor = currentPenColor;
-                ctx.shadowBlur = 2 * currentLineWidth;
+                ctx.shadowBlur = 1.5 * currentLineWidth;
                 break;
             default:
                 ctx.globalCompositeOperation = "source-over";
@@ -151,6 +151,13 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         ctx.lineCap = "round";
         // ----------------------
 
+        // 線分の長さを計算
+        const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        const MIN_MOVE_DISTANCE = 4;
+
+        if (distance <= MIN_MOVE_DISTANCE) {
+            ctx.shadowBlur = 0;
+        }
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
@@ -168,6 +175,40 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         };
     }, []);
 
+    // グローペンの時に、一度シャドウ以外の線を削除し中央の線のみ再描画
+    const historyReDraw = useCallback((
+        ctx: CanvasRenderingContext2D,
+        history: ItemHistory[],
+    ) => {
+        ctx.strokeStyle = "white";
+        ctx.lineCap = "round";
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.shadowBlur = 0;
+        
+        const old_op = ctx.globalCompositeOperation
+        const item = history.at(-1);
+
+        if (item) {
+            ctx.lineWidth = item.lineWidth;
+            item.coordinates.forEach((coord) => {
+
+                ctx.beginPath();
+                ctx.moveTo(coord.start_x, coord.start_y);
+                ctx.lineTo(coord.end_x, coord.end_y);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.globalCompositeOperation = "source-over";
+                ctx.lineWidth = item.lineWidth;
+                ctx.beginPath();
+                ctx.moveTo(coord.start_x, coord.start_y);
+                ctx.lineTo(coord.end_x, coord.end_y);
+                ctx.stroke();
+                ctx.closePath();
+            });
+            ctx.globalCompositeOperation = old_op;
+        };
+    }, []);
+
     const clearCanvas = useCallback((isReset = false) => {
         const canvas = canvasRef.current;
         const ctx = ctxRef.current;
@@ -175,8 +216,8 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (isReset) {
-            historyRef.current.splice(0)
-        }
+            historyRef.current.splice(0);
+        };
     }, []);
 
 const reDraw = useCallback(() => {
@@ -209,13 +250,13 @@ const reDraw = useCallback(() => {
                     coord.start_y, 
                     coord.end_x, 
                     coord.end_y, 
-                    itemPenColor,      // ✅ 履歴の値を使用
-                    itemDrawOption,    // ✅ 履歴の値を使用
-                    itemLineWidth      // ✅ 履歴の値を使用
+                    itemPenColor,
+                    itemDrawOption, 
+                    itemLineWidth   
                 );
-            }
-        })
-    })
+            };
+        });
+    });
 }, [clearCanvas, drawLine]);
 
     const undoRedo = useCallback((isUndoed: boolean) => {
@@ -272,7 +313,7 @@ const reDraw = useCallback(() => {
         const imgCtx = imgCanvas.getContext("2d");
         if (!imgCtx) return;
 
-        clearCanvas(true)
+        clearCanvas(true);
         const img = new Image();
         // クロスオリジンの画像をキャンバスに描画してエクスポートしたい場合は
         // crossOrigin を設定する必要があります（サーバ側で CORS 許可が必要）。
@@ -290,6 +331,9 @@ const reDraw = useCallback(() => {
             let finalHeight = 720;
             const maxWidth = window.innerWidth - 200;
             const maxHeight = window.innerHeight - 200;
+
+            finalWidth = imgWidth;
+            finalHeight = imgHeight;
 
             if (imgHeight > maxHeight) {
                 finalHeight = maxHeight;
@@ -379,6 +423,9 @@ const reDraw = useCallback(() => {
     // 描画終了
     const handleEnd = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
         isDrawingRef.current = false;
+        const canvas = canvasRef.current;
+        const ctx = ctxRef.current;
+        if (!ctx || !canvas) return;
 
         if ('touches' in e) {
             e.preventDefault();
@@ -391,6 +438,9 @@ const reDraw = useCallback(() => {
             lineWidth: lineWidth,
             coordinates: strokeRef.current,
         });
+        if (drawOption === 2) {
+            historyReDraw(ctx, historyRef.current);
+        };
     };
 
     // 描画中
@@ -410,15 +460,6 @@ const reDraw = useCallback(() => {
             end_x: x.current,
             end_y: y.current,
         });
-        if (drawOption === 2) {
-            // グローの場合、直前の線分も描画
-            strokeRef.current.push({
-                start_x: olderX.current.older,
-                start_y: olderY.current.older,
-                end_x: olderX.current.old,
-                end_y: olderY.current.old,
-            });
-        }
     };
 
     return (
