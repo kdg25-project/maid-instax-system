@@ -1,1 +1,83 @@
 @import "tailwindcss";
+
+.scan {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.65) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: scan 2.5s infinite;
+}
+
+.paper {
+    animation: paper var(--paper-animation-duration, 4s) cubic-bezier(0.645, 0.045, 0.355, 1) infinite;
+}
+
+.paper-sparkles {
+    pointer-events: none;
+}
+
+.paper-sparkle {
+    position: absolute;
+    opacity: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: center;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255));
+    animation-duration: var(--paper-animation-duration, 2s);
+    animation-name: sparkle-burst;
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+@keyframes scan {
+    0% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+}
+
+@keyframes paper {
+    0% {
+        transform: translateY(130%);
+        opacity: 0;
+    }
+    50% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-200%);
+        opacity: 0;
+    }
+}
+
+@keyframes sparkle-burst {
+    0% {
+        opacity: 0;
+        transform: translateY(14px) scale(0.45) rotate(-8deg);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg);
+    }
+    75% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-14px) scale(0.4) rotate(12deg);
+    }
+}

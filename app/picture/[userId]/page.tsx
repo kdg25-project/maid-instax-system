@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { fetchInstaxImage } from "@/api/instax-show";
+import InstaxCard from "@/components/instax-3d-card";
 
 type Props = {
     params: Promise<{ userId: string }>;
@@ -12,37 +12,61 @@ async function getUser(userId: string) {
     return res.json();
 }
 
+function getHonorificColor(honorific?: string) {
+    if (honorific === "ご主人様") return "from-[#A8D5FF] to-[#C8E6FF]";
+    if (honorific === "お嬢様") return "from-[#FF5CA1] to-[#FF9AB5]";
+    return "from-[#2D1B13] to-[#4A3326]";
+}
+
 export default async function Page({ params }: Props) {
     const { userId } = await params;
     const imagesrc = await fetchInstaxImage(userId);
     const user = await getUser(userId);
-    return (
-        <div>
-            
-            <div className="fixed bottom-0 bg-[#FFE8E9] w-full h-50">
-                <p className="text-black text-[32px] font-bold pt-[40] text-center">行ってらっしゃいませ</p>
-                <div className="w-full flex justify-center font-bold text-[32px] gap-2">
-                    { user.data.honorific == "ご主人様" ? (
-                        <p className="text-[#0055FF]">{user.data.name}ご主人様</p>
-                    ) : (user.data.honorific == "お嬢様") ? (
-                        <p className="text-[#FF00D9]">{user.data.name}お嬢様</p>
-                    ) : (
-                        <p className="text-black">{user.data.name}</p>
-                    ) }
-                </div>
-            </div>
 
-            <div className="fixed top-0 w-full h-[164px] bg-[#FFE8E9] text-white font-bold pt-10">
-                <div className="flex justify-center gap-4">
-                    <div className="flex flex-col items-center text-[20px] bg-[#FFA9A9] rounded-[100px] h-20 w-70 pt-2">
-                        <p>ご来店</p>
-                        <p>ありがとうございました</p>
-                    </div>
-                </div>
+    const honorificColor = getHonorificColor(user.data.honorific);
+    const isReady = Boolean(user.complete && user.is_valid);
+    const statusMessage = isReady
+        ? "またのご帰宅をお待ちしております！"
+        : "ただいまチェキを仕上げています...";
+
+    return (
+        <div className="min-h-screen">
+            <div className="pointer-events-none fixed inset-0 overflow-hidden">
+                <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-[#FFB8E2]/60 blur-3xl animate-pulse" />
+                <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-[#FFCFE5]/60 blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
             </div>
-            
-            <div className="w-full h-[calc(100vh-364px)] mt-[164px] relative">
-                <Image src={imagesrc} alt="チェキ画像" fill className="object-contain bg-[#FFE8E9]"/>
+            <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col gap-6 px-5 py-8 sm:max-w-lg sm:px-6 sm:py-10">
+                <section className="p-6">
+                    <div className="flex flex-col gap-6">
+                        <div className="space-y-3">
+                            <h1 className="text-2xl font-bold text-[#E54268] leading-tight tracking-tight sm:text-3xl">
+                                <span className={`bg-linear-to-br ${honorificColor} bg-clip-text text-transparent`}>
+                                    {user.data.name}
+                                    {user.data.honorific}<br />
+                                </span>
+                                ご帰宅<br />
+                                ありがとうございました！
+                            </h1>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="relative overflow-hidden rounded-3xl bg-linear-to-br from-[#FF9AB5]/75 to-[#FFB8E2]/55">
+                    <div className="relative z-0 mx-auto aspect-3/4 w-full h-full overflow-hidden">
+                        <InstaxCard imageSrc={imagesrc} isReady={isReady} />
+                    </div>
+                </section>
+
+                <section className="p-6 text-center">
+                    <div className="space-y-3">
+                        {isReady && (
+                            <p className="text-xl font-bold text-[#E54268] tracking-wide sm:text-2xl">行ってらっしゃいませ！</p>
+                        )}
+                        <p className={`text-base ${isReady ? "text-[#7A4E4E]" : "text-[#E54268] animate-pulse"}`}>
+                            {statusMessage}
+                        </p>
+                    </div>
+                </section>
             </div>
         </div>
     );
