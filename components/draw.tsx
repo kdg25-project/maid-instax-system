@@ -332,10 +332,10 @@ const reDraw = useCallback(() => {
             const maxWidth = window.innerWidth - 200;
             const maxHeight = window.innerHeight - 200;
 
-            finalWidth = imgWidth;
-            finalHeight = imgHeight;
+            finalWidth = imgWidth * 100;
+            finalHeight = imgHeight * 100;
 
-            if (imgHeight > maxHeight) {
+            if (finalHeight > maxHeight) {
                 finalHeight = maxHeight;
                 finalWidth = (imgWidth / imgHeight) * finalHeight;
             } 
