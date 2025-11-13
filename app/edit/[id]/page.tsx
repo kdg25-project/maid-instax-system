@@ -4,6 +4,11 @@ import { Draw } from "@/components/draw";
 import { useState, useEffect } from "react";
 import SaveConfirmDialog from "@/components/save-confirm-dialog";
 
+import { Undo2, Redo2, Eraser, PenLine } from 'lucide-react';
+import Image from "next/image";
+
+import "./edit.css";
+
 
 type Props = {
     params: Promise<{ id: string }>;
@@ -23,7 +28,7 @@ type GetInstaxRes = {
 
 export default function Page({ params }: Props) {
     const [penColor, setPenColor] = useState("#fff5f8");
-    const [drawOption, setDrawOption] = useState(1);
+    const [drawOption, setDrawOption] = useState(2);
     const [lineWidth, setLineWidth] = useState(30);
     const [isSave, setIsSave] = useState(false);
     const [isUndo, setIsUndo] = useState(false);
@@ -31,7 +36,6 @@ export default function Page({ params }: Props) {
     const [isClear, setIsClear] = useState(false);
     const [imgData, setImgData] = useState<FormData | null>(null);
     const [showDialog, setShowDialog] = useState(false);
-    const [showPalette, setShowPalette] = useState(false);
     const [imgUrl, setImgUrl] = useState('');
     const [instaxId, setInstaxId] = useState<string>('');
 
@@ -73,6 +77,12 @@ export default function Page({ params }: Props) {
         "#a97458", // ミルクチョコ
     ];
 
+    const pens = [
+        0,
+        1,
+        2
+    ];
+
     return (
         <div>
             <SaveConfirmDialog
@@ -82,74 +92,58 @@ export default function Page({ params }: Props) {
                 instaxId={instaxId}
                 onClose={() => setShowDialog(false)}
             />
-            <Draw
-                src={imgUrl}
-                penColor={penColor}
-                drawOption={drawOption}
-                lineWidth={lineWidth}
-                isSave={isSave}
-                isUndo={isUndo}
-                isRedo={isRedo}
-                isClear={isClear}
-                setImgData={setImgData}
-            ></Draw>
-
-            <div
-                className="flex gap-4">
-                <button
-                    className="p-2 py-8 rounded-xl bg-pink-300 text-black"
-                    onClick={() => setShowPalette((prev) => !prev)}
-                >
-                    カラー
-                </button>
-
-                {showPalette && (
-                    <div className="grid grid-cols-6 gap-x-0 gap-3">
-                        {colors.map((color) => (
-                            <button
-                                key={color}
-                                onClick={() => setPenColor(color)}
-                                className={`
+            <div className="flex flex-4 justify-center items-center">
+                <div className="flex flex-col gap-2">
+                    {colors.map((color) => (
+                        <button
+                            key={color}
+                            onClick={() => setPenColor(color)}
+                            className={`
                                 w-8 h-8 rounded-full border
                                 ${penColor === color ? "border-4 border-gray-700" : "border-gray-400"}
                                 `}
-                                style={{ backgroundColor: color }}
-                            />
-                        ))}
-                        <input
-                            type="color"
-                            value={penColor}
-                            onChange={(e) => setPenColor(e.target.value)}
-                            className="w-8 h-8 rounded-full border"
+                            style={{ backgroundColor: color }}
                         />
-                    </div>
-                )}
+                    ))}
 
-                <select
-                    name="drawoption"
-                    value={drawOption}
-                    onChange={(e) => setDrawOption(Number(e.target.value))}
-                >
-                    <option value="0">消しゴム</option>
-                    <option value="1">ペン</option>
-                    <option value="2">グロー</option>
-                </select>
+                    <input
+                        type="color"
+                        value={penColor}
+                        onChange={(e) => setPenColor(e.target.value)}
+                        className="w-8 h-8 rounded-full border"
+                    />
+                </div>
 
                 <input
                     type="range"
-                    min="0"
-                    max="100"
+                    min="5"
+                    max="60"
+                    step="0.1"
                     value={lineWidth}
+                    className="vertical"
                     onChange={(e) => setLineWidth(Number(e.target.value))}
                 />
+                <Draw
+                    src={imgUrl}
+                    penColor={penColor}
+                    drawOption={drawOption}
+                    lineWidth={lineWidth}
+                    isSave={isSave}
+                    isUndo={isUndo}
+                    isRedo={isRedo}
+                    isClear={isClear}
+                    setImgData={setImgData}
+                ></Draw>
+            </div>
 
+            <div className="flex gap-4 p-4 justify-center items-center">
                 <button
                     className="p-2 py-2 rounded-xl bg-pink-300 text-black"
                     onClick={() => {
                         setIsUndo(!isUndo);
                     }}
                 >
-                    戻る
+                    <Undo2 />
                 </button>
 
                 <button
@@ -158,8 +152,25 @@ export default function Page({ params }: Props) {
                         setIsRedo(!isRedo);
                     }}
                 >
-                    前へ
+                    <Redo2 />
                 </button>
+
+                <div className="grid grid-cols-3 gap-x-4 gap-3">
+                    {pens.map((pen) => (
+                        <button
+                            key={pen}
+                            onClick={() => setDrawOption(pen)}
+                            className={`
+                            w-8 h-8 border
+                            ${drawOption === pen ? "border-4 border-gray-700" : "border-gray-400"}
+                            `}
+                        >
+                            {pen === 0 && <Image className="m-auto" src="/eraser.svg" alt="Eraser" width={24} height={24} />}
+                            {pen === 1 && <Image className="m-auto" src="/pen.svg" alt="Pen" width={24} height={24} />}
+                            {pen === 2 && <Image className="m-auto" src="/glow.svg" alt="Glow" width={24} height={24} />}
+                        </button>
+                    ))}
+                </div>
 
                 <button
                     className="p-2 py-2 rounded-xl bg-pink-300 text-black"
