@@ -70,6 +70,7 @@ interface ItemHistory {
 export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWidth = 3, isSave, isUndo, isRedo, isClear, maxWidth, setImgData }: DrawProps) => {
     const [viewCanvasSize, setViewCanvasSize] = useState({width:0, height:0});
     const [imgSize, setImgSize] = useState({width:1440, height:720});
+    const [rectSize, setRectSize] = useState(0);
 
     // canvas関連 
     const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -143,12 +144,12 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
                 ctx.globalCompositeOperation = "source-over";
                 ctx.strokeStyle = "#ffffff";
                 ctx.shadowColor = currentPenColor;
-                ctx.shadowBlur = 1.5 * currentLineWidth;
+                ctx.shadowBlur = 1.5 * currentLineWidth / 10;
                 break;
             default:
                 ctx.globalCompositeOperation = "source-over";
         }
-        ctx.lineWidth = currentLineWidth;
+        ctx.lineWidth = currentLineWidth / 10;
         ctx.lineCap = "round";
         // ----------------------
 
@@ -191,7 +192,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         const item = history.at(index);
 
         if (item) {
-            ctx.lineWidth = item.lineWidth;
+            ctx.lineWidth = item.lineWidth / 10;
             item.coordinates.forEach((coord) => {
 
                 ctx.beginPath();
@@ -200,7 +201,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
                 ctx.stroke();
                 ctx.closePath();
                 ctx.globalCompositeOperation = "source-over";
-                ctx.lineWidth = item.lineWidth;
+                ctx.lineWidth = item.lineWidth / 10;
                 ctx.beginPath();
                 ctx.moveTo(coord.start_x, coord.start_y);
                 ctx.lineTo(coord.end_x, coord.end_y);
@@ -249,7 +250,9 @@ const reDraw = useCallback(() => {
                 itemLineWidth   
             );
         });
-        historyReDraw(ctx, historyRef.current, index)
+        if (itemDrawOption === 2) {
+            historyReDraw(ctx, historyRef.current, index)
+        }
     });
 }, [clearCanvas, drawLine, historyReDraw]);
 
@@ -334,6 +337,8 @@ const reDraw = useCallback(() => {
                 finalWidth = maxWidth;
                 finalHeight = (imgHeight / imgWidth) * finalWidth;
             }
+
+            setRectSize(Math.sqrt(imgHeight ** 2 + imgWidth ** 2))
 
             setViewCanvasSize({width: finalWidth, height: finalHeight});
 
