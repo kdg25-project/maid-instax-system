@@ -4,9 +4,9 @@ import { Draw } from "@/components/draw";
 import { useState, useEffect } from "react";
 import SaveConfirmDialog from "@/components/save-confirm-dialog";
 
-import { Undo2, Redo2, Eraser, PenLine } from 'lucide-react';
+import { Undo2, Redo2, Check } from 'lucide-react';
 import Image from "next/image";
-
+import { Slider } from "@/components/ui/slider"
 import "./edit.css";
 
 
@@ -65,16 +65,27 @@ export default function Page({ params }: Props) {
 
     const colors = [
         "#fff5f8", // ミルキーホワイト
-        "#ff0000", // 赤
-        "#ffff00", // 黄
         "#ff6f91", // ローズピンク
-        "#0099ff", // ピュアブルー
-        "#9ee7f8", // アクアマリン
+        "#ffb7e5", // コットンキャンディ
         "#fff8b5", // レモンクリーム
         "#b8ebd0", // ミントグリーン
+        "#9ee7f8", // アクアマリン
+        "#0099ff", // ピュアブルー
         "#c8a2c8", // ラベンダー
-        "#ffb7e5", // コットンキャンディ
         "#a97458", // ミルクチョコ
+    ];
+
+    const vividColors = [
+        "#ff0000", // 赤
+        "#FF700A", // 橙
+        "#ffff00", // 黄
+        "#77FF00", // 黄緑
+        "#00C010", // 緑
+        "#00D0FF", // 水色
+        "#0044FF", // 青
+        "#2000AF", // 紺
+        "#BB00FF", // 紫
+        "#FF00B7", // ピンク
     ];
 
     const pens = [
@@ -92,36 +103,51 @@ export default function Page({ params }: Props) {
                 instaxId={instaxId}
                 onClose={() => setShowDialog(false)}
             />
-            <div className="flex flex-4 justify-center items-center">
-                <div className="flex flex-col gap-2">
+            <div className="flex flex-4 justify-center items-center mt-[30px]">
+                <div className="flex flex-col gap-2 bg-[#FFF89A] p-2 rounded-full mr-4">
+                    {vividColors.map((vivid) => (
+                        <button
+                            key={vivid}
+                            onClick={() => setPenColor(vivid)}
+                            className={`
+                                w-8 h-8 rounded-full border
+                                ${penColor === vivid ? "border-4 bg-gray-200 ring-2 ring-gray-400" : "border-white border-3"}
+                                `}
+                            style={{ backgroundColor: vivid }}
+                        />
+                    ))}
+                </div>
+
+                <div className="flex flex-col gap-2 bg-[#FFF89A] p-2 rounded-full items-center">
                     {colors.map((color) => (
                         <button
                             key={color}
                             onClick={() => setPenColor(color)}
                             className={`
                                 w-8 h-8 rounded-full border
-                                ${penColor === color ? "border-4 border-gray-700" : "border-gray-400"}
+                                ${penColor === color ? "border-4 bg-gray-200 ring-2 ring-gray-400" : "border-white border-3"}
                                 `}
                             style={{ backgroundColor: color }}
                         />
                     ))}
-
-                    <input
-                        type="color"
-                        value={penColor}
-                        onChange={(e) => setPenColor(e.target.value)}
-                        className="w-8 h-8 rounded-full border"
-                    />
+                    <div className="inline-flex w-fit rounded-full p-[3px] shrink-0 rainbow-border">
+                        <input
+                            type="color"
+                            value={penColor}
+                            onChange={(e) => setPenColor(e.target.value)}
+                            className="rainbow-input w-8 h-8 rounded-full"
+                        />
+                    </div>
                 </div>
 
-                <input
-                    type="range"
-                    min="5"
-                    max="60"
-                    step="0.1"
-                    value={lineWidth}
-                    className="vertical"
-                    onChange={(e) => setLineWidth(Number(e.target.value))}
+                <Slider
+                    min={5}
+                    max={60}
+                    step={0.1}
+                    value={[lineWidth]}
+                    className="w-[100px] m-10"
+                    orientation="vertical"
+                    onValueChange={(value) => setLineWidth(value[0])}
                 />
                 <Draw
                     src={imgUrl}
@@ -137,50 +163,54 @@ export default function Page({ params }: Props) {
             </div>
 
             <div className="flex gap-4 p-4 justify-center items-center">
-                <button
-                    className="p-2 py-2 rounded-xl bg-pink-300 text-black"
-                    onClick={() => {
-                        setIsUndo(!isUndo);
-                    }}
-                >
-                    <Undo2 />
-                </button>
+                <div className="bg-[#FFF89A] p-2 rounded-full flex gap-2">
+                    <button
+                        className="p-2 py-2 rounded-full bg-white text-black"
+                        onClick={() => {
+                            setIsUndo(!isUndo);
+                        }}
+                    >
+                        <Undo2 />
+                    </button>
 
-                <button
-                    className="p-2 py-2 rounded-xl bg-pink-300 text-black"
-                    onClick={() => {
-                        setIsRedo(!isRedo);
-                    }}
-                >
-                    <Redo2 />
-                </button>
-
-                <div className="grid grid-cols-3 gap-x-4 gap-3">
-                    {pens.map((pen) => (
-                        <button
-                            key={pen}
-                            onClick={() => setDrawOption(pen)}
-                            className={`
-                            w-8 h-8 border
-                            ${drawOption === pen ? "border-4 border-gray-700" : "border-gray-400"}
-                            `}
-                        >
-                            {pen === 0 && <Image className="m-auto" src="/eraser.svg" alt="Eraser" width={24} height={24} />}
-                            {pen === 1 && <Image className="m-auto" src="/pen.svg" alt="Pen" width={24} height={24} />}
-                            {pen === 2 && <Image className="m-auto" src="/glow.svg" alt="Glow" width={24} height={24} />}
-                        </button>
-                    ))}
+                    <button
+                        className="p-2 py-2 rounded-full bg-white text-black"
+                        onClick={() => {
+                            setIsRedo(!isRedo);
+                        }}
+                    >
+                        <Redo2 />
+                    </button>
                 </div>
 
-                <button
-                    className="p-2 py-2 rounded-xl bg-pink-300 text-black"
-                    onClick={() => {
-                        setIsSave(true);
-                        setShowDialog(true);
-                    }}
-                >
-                    できた
-                </button>
+                <div className="bg-[#FFF89A] p-2 rounded-full flex gap-2">
+                    <div className="grid grid-cols-3 gap-x-4 gap-3">
+                        {pens.map((pen) => (
+                            <button
+                                key={pen}
+                                onClick={() => setDrawOption(pen)}
+                                className={`
+                            rounded-full bg-white p-1
+                            ${drawOption === pen ? "bg-gray-200 ring-2 ring-gray-400" : ""}
+                            `}
+                            >
+                                {pen === 0 && <Image className="m-auto" src="/eraser.svg" alt="Eraser" width={32} height={32} />}
+                                {pen === 1 && <Image className="m-auto" src="/pen.svg" alt="Pen" width={32} height={32} />}
+                                {pen === 2 && <Image className="m-auto" src="/glow.svg" alt="Glow" width={32} height={32} />}
+                            </button>
+                        ))}
+                    </div>
+
+                    <button
+                        className="p-2 py-2 rounded-full bg-white text-black"
+                        onClick={() => {
+                            setIsSave(true);
+                            setShowDialog(true);
+                        }}
+                    >
+                        <Check />
+                    </button>
+                </div>
             </div>
         </div>
     )
