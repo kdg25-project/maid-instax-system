@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Html, OrbitControls, useTexture } from "@react-three/drei";
+import { Html, OrbitControls, Text, useTexture } from "@react-three/drei";
 import { Suspense, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Sparkle } from "lucide-react";
@@ -82,6 +82,15 @@ const ORBIT_CONTROLS_CONFIG = {
     rotateSpeed: 1,
     minPolarAngle: Math.PI / 3.4 - 0.35,
     maxPolarAngle: Math.PI / 1.4 + 0.35,
+};
+
+const LABEL_TYPOGRAPHY = {
+    BASE_FONT_SIZE: 0.24,
+    MIN_FONT_SIZE: 0.16,
+    BASE_LETTER_SPACING: 0.035,
+    MIN_LETTER_SPACING: 0.015,
+    CHAR_WIDTH_FACTOR: 0.58,
+    HORIZONTAL_PADDING: 0.45,
 };
 
 const SPARKLES: SparklePoint[] = [
@@ -266,6 +275,14 @@ function InstaxMesh({ texture, dimensions, pairingLabel }: InstaxMeshProps) {
     const { width, height, depth } = dimensions;
     const photoOffsetY = BOTTOM_MARGIN / 1.8;
     const labelPositionY = photoOffsetY - height / 2 - 0.2;
+    const normalizedLabel = useMemo(() => normalizeLabelText(pairingLabel), [pairingLabel]);
+    const maxLabelWidth = Math.max(width - LABEL_TYPOGRAPHY.HORIZONTAL_PADDING, 1.6);
+    const labelTypography = useMemo(
+        () => calculateLabelTypography(normalizedLabel, maxLabelWidth),
+        [normalizedLabel, maxLabelWidth],
+    );
+
+    const shouldRenderLabel = Boolean(normalizedLabel);
 
     return (
         <>
@@ -279,18 +296,20 @@ function InstaxMesh({ texture, dimensions, pairingLabel }: InstaxMeshProps) {
                     side={THREE.FrontSide}
                 />
             </mesh>
-            {pairingLabel && (
-                <Html
-                    position={[0, labelPositionY, depth - 0.09]}
-                    transform
-                    distanceFactor={6}
-                    wrapperClass="pointer-events-none select-none"
-                    occlude
+            {shouldRenderLabel && (
+                <Text
+                    position={[0, labelPositionY, depth - 0.08]}
+                    fontSize={labelTypography.fontSize}
+                    lineHeight={1}
+                    color="#1A1A1A"
+                    letterSpacing={labelTypography.letterSpacing}
+                    anchorX="center"
+                    anchorY="middle"
+                    maxWidth={labelTypography.maxWidth}
+                    whiteSpace="nowrap"
                 >
-                    <p className="text-[0.65rem] font-semibold tracking-[0.18em] text-[#1A1A1A]">
-                        {pairingLabel}
-                    </p>
-                </Html>
+                    {normalizedLabel}
+                </Text>
             )}
         </>
     );
@@ -337,6 +356,45 @@ function CardBase({ metrics, backTexture }: CardBaseProps) {
             </mesh>
         </>
     );
+}
+
+function normalizeLabelText(label?: string) {
+    return label?.replace(/\s+/g, " ").trim() ?? "";
+}
+
+function calculateLabelTypography(label: string, availableWidth: number) {
+    const maxWidth = Math.max(availableWidth, 1.2);
+    if (!label) {
+        return {
+            fontSize: LABEL_TYPOGRAPHY.BASE_FONT_SIZE,
+            letterSpacing: LABEL_TYPOGRAPHY.BASE_LETTER_SPACING,
+            maxWidth,
+        };
+    }
+
+    const effectiveChars = label.replace(/\s+/g, "").length || label.length;
+    const baseGlyphWidth = LABEL_TYPOGRAPHY.BASE_FONT_SIZE * LABEL_TYPOGRAPHY.CHAR_WIDTH_FACTOR;
+    const baseLabelWidth =
+        effectiveChars * baseGlyphWidth +
+        Math.max(effectiveChars - 1, 0) * LABEL_TYPOGRAPHY.BASE_LETTER_SPACING;
+
+    const shrinkRatio = baseLabelWidth > maxWidth ? maxWidth / baseLabelWidth : 1;
+    const fontSize = clamp(
+        LABEL_TYPOGRAPHY.BASE_FONT_SIZE * shrinkRatio,
+        LABEL_TYPOGRAPHY.MIN_FONT_SIZE,
+        LABEL_TYPOGRAPHY.BASE_FONT_SIZE,
+    );
+    const letterSpacing = clamp(
+        LABEL_TYPOGRAPHY.BASE_LETTER_SPACING * shrinkRatio,
+        LABEL_TYPOGRAPHY.MIN_LETTER_SPACING,
+        LABEL_TYPOGRAPHY.BASE_LETTER_SPACING,
+    );
+
+    return { fontSize, letterSpacing, maxWidth };
+}
+
+function clamp(value: number, min: number, max: number) {
+    return Math.min(Math.max(value, min), max);
 }
 
 function Loader() {

@@ -1,6 +1,6 @@
 import { fetchInstaxImage } from "@/api/instax-show";
 import InstaxCard from "@/components/instax-3d-card";
-
+import Image from "next/image";
 export const fetchCache = "only-no-store";
 
 type Props = {
@@ -64,27 +64,16 @@ export default async function Page({ params }: Props) {
     const isReady = Boolean(user.data.status == "instax_complete" || user.data.status == "leaving");
 
     const statusMessage = isReady
-        ? "またのご帰宅をお待ちしております！"
+        ? "ご体験いただきありがとうございました！"
         : "";
 
     return (
-        <div className="min-h-screen">
-            <div className="pointer-events-none fixed inset-0 overflow-hidden">
-                <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-[#FFB8E2]/60 blur-3xl animate-pulse" />
-                <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-[#FFCFE5]/60 blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-            </div>
+        <div className="min-h-screen bg-fixed bg-linear-to-bl from-[#A8EAEF] via-[#E7D1D9] to-[#FBAFB7]">
             <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col gap-6 px-5 py-8 sm:max-w-lg sm:px-6 sm:py-10">
-                <section className="p-6">
+                <section className="p-6 pb-3">
                     <div className="flex flex-col gap-6">
-                        <div className="space-y-3">
-                            <h1 className="text-2xl font-bold text-[#E54268] leading-tight tracking-tight sm:text-3xl">
-                                <span className={`bg-linear-to-br ${honorificColor} bg-clip-text text-transparent`}>
-                                    {user.data.name}
-                                    {user.data.honorific}<br />
-                                </span>
-                                ご帰宅<br />
-                                ありがとうございました！
-                            </h1>
+                        <div className="m-auto">
+                            <Image src={"/Maid-Cafe_Logo.png"} alt="Maid Cafe Logo" width={200} height={80} className="mx-auto sm:mx-0" />
                         </div>
                     </div>
                 </section>
@@ -103,7 +92,7 @@ export default async function Page({ params }: Props) {
                 <section className="p-6 text-center">
                     <div className="space-y-3">
                         {isReady && (
-                            <p className="text-xl font-bold text-[#E54268] tracking-wide sm:text-2xl">行ってらっしゃいませ！</p>
+                            <p className="text-xl font-bold text-[#000000] tracking-wide sm:text-2xl">行ってらっしゃいませ！</p>
                         )}
                         <p className={`text-base ${isReady ? "text-[#7A4E4E]" : "text-[#E54268] animate-pulse"}`}>
                             {statusMessage}
