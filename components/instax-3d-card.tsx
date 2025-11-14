@@ -10,6 +10,8 @@ import type { CSSProperties } from "react";
 type Props = {
     imageSrc: string;
     isReady: boolean;
+    maidName: string;
+    userName: string;
 };
 
 type InstaxDimensions = {
@@ -28,11 +30,13 @@ type CardMetrics = {
 type StageProps = {
     imageSrc: string;
     isReady: boolean;
+    pairingLabel?: string;
 };
 
 type InstaxMeshProps = {
     texture: THREE.Texture;
     dimensions: InstaxDimensions;
+    pairingLabel?: string;
 };
 
 type CardBaseProps = {
@@ -90,7 +94,9 @@ const SPARKLES: SparklePoint[] = [
 ];
 
 // Main
-export default function InstaxCard({ imageSrc, isReady }: Props) {
+export default function InstaxCard({ imageSrc, isReady, maidName, userName }: Props) {
+    const pairingLabel = maidName && userName ? `${maidName} ♡ ${userName}` : maidName || userName || undefined;
+
     return (
         <>
             <div className="absolute inset-0 z-10">
@@ -102,6 +108,9 @@ export default function InstaxCard({ imageSrc, isReady }: Props) {
                             camera={CAMERA_CONFIG}
                             dpr={[1, 1.8]}
                             gl={{ antialias: true, alpha: true }}
+                            onCreated={({ gl }) => {
+                                gl.setClearColor(0x000000, 0);
+                            }}
                         >
                             <ambientLight intensity={1.2} color="#FFFFFF" />
                             <directionalLight position={[0, 0, 10]} intensity={0.8} color="#FFFFFF" />
@@ -110,7 +119,7 @@ export default function InstaxCard({ imageSrc, isReady }: Props) {
                             <directionalLight position={[0, -8, 0]} intensity={0.6} color="#FFFFFF" />
 
                             <Suspense fallback={<Loader />}>
-                                <Stage imageSrc={imageSrc} isReady={isReady} />
+                                <Stage imageSrc={imageSrc} isReady={isReady} pairingLabel={pairingLabel} />
                             </Suspense>
 
                             <OrbitControls
@@ -131,9 +140,9 @@ export default function InstaxCard({ imageSrc, isReady }: Props) {
                                     <p className="text-xs font-semibold tracking-[0.5em] text-white/75">
                                         JUST A MOMENT
                                     </p>
-                                    <p className="text-xl font-bold">仕上げています...</p>
+                                    <p className="text-xl font-bold">魔法をかけています...</p>
                                     <p className="text-xs font-medium text-white/80 sm:text-sm">
-                                        もうしばらくお待ちください
+                                        もうちょっとまっててね♪
                                     </p>
                                 </div>
                                 <div
@@ -170,7 +179,7 @@ export default function InstaxCard({ imageSrc, isReady }: Props) {
 }
 
 // Stage
-function Stage({ imageSrc, isReady }: StageProps) {
+function Stage({ imageSrc, isReady, pairingLabel }: StageProps) {
     const { texture, dimensions } = useInstaxTexture(imageSrc);
     const backTexture = useTexture('/logo.svg');
     const metrics = useMemo(() => calculateCardMetrics(dimensions), [dimensions]);
@@ -208,7 +217,7 @@ function Stage({ imageSrc, isReady }: StageProps) {
             onPointerLeave={handleInteractionEnd}
         >
             <CardBase metrics={metrics} backTexture={backTexture} />
-            <InstaxMesh texture={texture} dimensions={dimensions} />
+            <InstaxMesh texture={texture} dimensions={dimensions} pairingLabel={pairingLabel} />
         </group>
     );
 }
@@ -253,21 +262,37 @@ function calculateCardMetrics(dimensions: InstaxDimensions): CardMetrics {
     return { frameOuterWidth, frameOuterHeight, cardWidth, cardHeight };
 }
 
-function InstaxMesh({ texture, dimensions }: InstaxMeshProps) {
+function InstaxMesh({ texture, dimensions, pairingLabel }: InstaxMeshProps) {
     const { width, height, depth } = dimensions;
     const photoOffsetY = BOTTOM_MARGIN / 1.8;
+    const labelPositionY = photoOffsetY - height / 2 - 0.2;
 
     return (
-        <mesh position={[0, photoOffsetY, depth - 0.09]}>
-            <planeGeometry args={[width, height]} />
-            <meshStandardMaterial
-                map={texture}
-                metalness={0.1}
-                roughness={0.4}
-                toneMapped
-                side={THREE.FrontSide}
-            />
-        </mesh>
+        <>
+            <mesh position={[0, photoOffsetY, depth - 0.09]}>
+                <planeGeometry args={[width, height]} />
+                <meshStandardMaterial
+                    map={texture}
+                    metalness={0.1}
+                    roughness={0.4}
+                    toneMapped
+                    side={THREE.FrontSide}
+                />
+            </mesh>
+            {pairingLabel && (
+                <Html
+                    position={[0, labelPositionY, depth - 0.09]}
+                    transform
+                    distanceFactor={6}
+                    wrapperClass="pointer-events-none select-none"
+                    occlude
+                >
+                    <p className="text-[0.65rem] font-semibold tracking-[0.18em] text-[#1A1A1A]">
+                        {pairingLabel}
+                    </p>
+                </Html>
+            )}
+        </>
     );
 }
 
