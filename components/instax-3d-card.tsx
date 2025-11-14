@@ -298,7 +298,7 @@ function InstaxMesh({ texture, dimensions, pairingLabel }: InstaxMeshProps) {
             </mesh>
             {shouldRenderLabel && (
                 <Text
-                    position={[0, labelPositionY, depth - 0.08]}
+                    position={[0, labelPositionY + -0.15, depth - 0.08]}
                     fontSize={labelTypography.fontSize}
                     lineHeight={1}
                     color="#1A1A1A"
