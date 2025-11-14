@@ -47,20 +47,12 @@ async function getMaid(maidId: string) {
     return res.json();
 }
 
-
-function getHonorificColor(honorific?: string) {
-    if (honorific === "ご主人様") return "from-[#66B8FF] to-[#3B82F6]";
-    if (honorific === "お嬢様") return "from-[#FF5CA1] to-[#FF9AB5]";
-    return "from-[#2D1B13] to-[#4A3326]";
-}
-
 export default async function Page({ params }: Props) {
     const { userId } = await params;
     const imagesrc = await fetchInstaxImage(userId);
     const user: UserRes = await getUser(userId);
     const maidRes: MaidRes = await getMaid(user.data.maid_id);
 
-    const honorificColor = getHonorificColor(user.data.honorific);
     const isReady = Boolean(user.data.status == "instax_complete" || user.data.status == "leaving");
 
     const statusMessage = isReady
