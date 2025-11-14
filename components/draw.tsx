@@ -9,9 +9,9 @@ import React, { useRef, useState, useEffect, useCallback, Dispatch, SetStateActi
 ----------------
 -- drawOption --
 
-1 = 消しゴム
-2 = ペン
-3 = グロー
+0 = 消しゴム
+1 = ペン
+2 = グロー
 ----------------
 -- penColor --
 whiteなどの色文字列または#ffffffのようなカラーコード
@@ -31,6 +31,9 @@ whiteなどの色文字列または#ffffffのようなカラーコード
 -- isClear --
 親コンポーネントから渡されるクリアトリガー用フラグ(state)
 ----------------
+-- maxWidth --
+画像の横幅の最大サイズ
+--------------
 -- setImgData --
 親コンポーネントに画像データを渡すための関数(stateのsetter)
 ----------------
@@ -132,7 +135,6 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         // -----描画オプション-----
         ctx.lineWidth = Math.round((currentLineWidth / 15) ** 2);
         ctx.lineCap = "round";
-        console.log(ctx.lineWidth)
 
         switch (currentDrawOption) {
             case 0: // 消しゴム
