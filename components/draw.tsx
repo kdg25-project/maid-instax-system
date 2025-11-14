@@ -48,7 +48,7 @@ interface DrawProps {
     isUndo?: boolean;
     isRedo?: boolean;
     isClear?: boolean;
-    maxWidth: number;
+    maxWidth?: number;
     setImgData: Dispatch<SetStateAction<FormData | null>>;
 }
 
@@ -67,7 +67,7 @@ interface ItemHistory {
     coordinates: Stroke[];
 };
 
-export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWidth = 3, isSave, isUndo, isRedo, isClear, maxWidth, setImgData }: DrawProps) => {
+export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWidth = 3, isSave, isUndo, isRedo, isClear, maxWidth = 520, setImgData }: DrawProps) => {
     const [viewCanvasSize, setViewCanvasSize] = useState({width:0, height:0});
     const [imgSize, setImgSize] = useState({width:1440, height:720});
 
