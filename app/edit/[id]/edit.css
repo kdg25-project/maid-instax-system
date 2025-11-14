@@ -1,0 +1,52 @@
+.vertical {
+    transform: rotate(-0.25turn);
+}
+
+.rainbow-border {
+    background: linear-gradient(#ff0000,
+            #ff7a00,
+            #ffff00,
+            #00d400,
+            #00e5ff,
+            #0066ff,
+            #8a2be2,
+            #ff00ff,
+            #ff0000);
+}
+
+input.rainbow-input {
+    border: 0;
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    padding: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    overflow: hidden;
+    border: 0;
+    background: none;
+}
+
+/* WebKit 系（Chrome / Safari） */
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 9999px;
+    border: none;
+    background-clip: padding-box;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 9999px;
+    background-clip: padding-box;
+}
+
+/* Firefox */
+input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 9999px;
+}
