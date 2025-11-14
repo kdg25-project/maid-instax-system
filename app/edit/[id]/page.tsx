@@ -38,6 +38,7 @@ export default function Page({ params }: Props) {
     const [showDialog, setShowDialog] = useState(false);
     const [imgUrl, setImgUrl] = useState('');
     const [instaxId, setInstaxId] = useState<string>('');
+    const [instax, setInstax] = useState<GetInstaxRes | null>(null);
 
     async function getInstax(apiKey: string, id: string): Promise<GetInstaxRes> {
         const request = await fetch("https://api.kdgn.tech/api/instax/" + String(id), {
@@ -46,6 +47,17 @@ export default function Page({ params }: Props) {
             }
         });
         return request.json()
+    }
+
+    async function updateStatus(id: string, status: string, apiKey: string) {
+        await fetch(`https://api.kdgn.tech/api/users/${id}`, {
+            method: "PATCH",
+            headers: {
+                "x-api-key": apiKey,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: status }),
+        });
     }
 
     useEffect(() => {
@@ -57,6 +69,8 @@ export default function Page({ params }: Props) {
                 setInstaxId(id);
                 const d = await getInstax(apiKey || '', id);
                 setImgUrl(d.data.image_url ?? '')
+                setInstax(d);
+                await updateStatus(d.data.user_id, "instax_draw", apiKey);
             } catch (err) {
                 console.error(err);
             }
@@ -205,9 +219,11 @@ export default function Page({ params }: Props) {
 
                     <button
                         className="p-2 py-2 rounded-full bg-white text-black"
-                        onClick={() => {
+                        onClick={async () => {
                             setIsSave(true);
                             setShowDialog(true);
+                            const apiKey = String(localStorage.getItem("apiKey") || '');
+                            await updateStatus(instax?.data.user_id || "", "instax_complete", apiKey);
                         }}
                     >
                         <Check />
