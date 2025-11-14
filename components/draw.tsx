@@ -70,7 +70,6 @@ interface ItemHistory {
 export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWidth = 3, isSave, isUndo, isRedo, isClear, maxWidth, setImgData }: DrawProps) => {
     const [viewCanvasSize, setViewCanvasSize] = useState({width:0, height:0});
     const [imgSize, setImgSize] = useState({width:1440, height:720});
-    const [rectSize, setRectSize] = useState(0);
 
     // canvas関連 
     const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -337,8 +336,6 @@ const reDraw = useCallback(() => {
                 finalWidth = maxWidth;
                 finalHeight = (imgHeight / imgWidth) * finalWidth;
             }
-
-            setRectSize(Math.sqrt(imgHeight ** 2 + imgWidth ** 2))
 
             setViewCanvasSize({width: finalWidth, height: finalHeight});
 
