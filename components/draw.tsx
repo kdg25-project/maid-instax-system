@@ -48,6 +48,7 @@ interface DrawProps {
     isUndo?: boolean;
     isRedo?: boolean;
     isClear?: boolean;
+    maxWidth?: number;
     setImgData: Dispatch<SetStateAction<FormData | null>>;
 }
 
@@ -66,9 +67,9 @@ interface ItemHistory {
     coordinates: Stroke[];
 };
 
-export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWidth = 3, isSave, isUndo, isRedo, isClear, setImgData }: DrawProps) => {
-    const [viewCanvasSize, setViewCanvasSize] = useState({width:1280, height:720});
-    const [imgSize, setImgSize] = useState({width:1280, height:720});
+export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWidth = 3, isSave, isUndo, isRedo, isClear, maxWidth = 520, setImgData }: DrawProps) => {
+    const [viewCanvasSize, setViewCanvasSize] = useState({width:0, height:0});
+    const [imgSize, setImgSize] = useState({width:1440, height:720});
 
     // canvas関連 
     const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -142,12 +143,12 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
                 ctx.globalCompositeOperation = "source-over";
                 ctx.strokeStyle = "#ffffff";
                 ctx.shadowColor = currentPenColor;
-                ctx.shadowBlur = 1.5 * currentLineWidth;
+                ctx.shadowBlur = 1.5 * currentLineWidth / 10;
                 break;
             default:
                 ctx.globalCompositeOperation = "source-over";
         }
-        ctx.lineWidth = currentLineWidth;
+        ctx.lineWidth = currentLineWidth / 10;
         ctx.lineCap = "round";
         // ----------------------
 
@@ -179,6 +180,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
     const historyReDraw = useCallback((
         ctx: CanvasRenderingContext2D,
         history: ItemHistory[],
+        index:number = -1
     ) => {
         ctx.strokeStyle = "white";
         ctx.lineCap = "round";
@@ -186,10 +188,10 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         ctx.shadowBlur = 0;
         
         const old_op = ctx.globalCompositeOperation
-        const item = history.at(-1);
+        const item = history.at(index);
 
         if (item) {
-            ctx.lineWidth = item.lineWidth;
+            ctx.lineWidth = item.lineWidth / 10;
             item.coordinates.forEach((coord) => {
 
                 ctx.beginPath();
@@ -198,7 +200,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
                 ctx.stroke();
                 ctx.closePath();
                 ctx.globalCompositeOperation = "source-over";
-                ctx.lineWidth = item.lineWidth;
+                ctx.lineWidth = item.lineWidth / 10;
                 ctx.beginPath();
                 ctx.moveTo(coord.start_x, coord.start_y);
                 ctx.lineTo(coord.end_x, coord.end_y);
@@ -228,36 +230,30 @@ const reDraw = useCallback(() => {
 
     clearCanvas();
     // 履歴を元に再描画
-    history.forEach((item) => {
+    history.forEach((item, index) => {
         // 履歴に保存された設定値を使用
         const itemPenColor = item.penColor;
         const itemDrawOption = item.drawOption;
         const itemLineWidth = item.lineWidth;
         
-        item.coordinates.forEach((coord, index) => {
-            // 履歴の設定値を使用
-            if (index % 2 === 1 && itemDrawOption === 2){
-                olderX.current.old = coord.end_x;
-                olderY.current.old = coord.end_y;
-
-                olderX.current.older = coord.start_x;
-                olderY.current.older = coord.start_y;
-            } else {
-                // 履歴の設定値を渡す
-                drawLine(
-                    ctx, 
-                    coord.start_x, 
-                    coord.start_y, 
-                    coord.end_x, 
-                    coord.end_y, 
-                    itemPenColor,
-                    itemDrawOption, 
-                    itemLineWidth   
-                );
-            };
+        item.coordinates.forEach((coord) => {
+            // 履歴の設定値を渡す
+            drawLine(
+                ctx, 
+                coord.start_x, 
+                coord.start_y, 
+                coord.end_x, 
+                coord.end_y, 
+                itemPenColor,
+                itemDrawOption, 
+                itemLineWidth   
+            );
         });
+        if (itemDrawOption === 2) {
+            historyReDraw(ctx, historyRef.current, index)
+        }
     });
-}, [clearCanvas, drawLine]);
+}, [clearCanvas, drawLine, historyReDraw]);
 
     const undoRedo = useCallback((isUndoed: boolean) => {
         const canvas = canvasRef.current;
@@ -319,21 +315,18 @@ const reDraw = useCallback(() => {
         // crossOrigin を設定する必要があります（サーバ側で CORS 許可が必要）。
         img.crossOrigin = "anonymous";
         img.src = src;
+
         img.onload = () => {
             // 画像のアスペクト比を維持して表示サイズを計算
             const imgWidth = img.width;
             const imgHeight = img.height;
-            img.onerror = (e) => {
-                console.error("Failed to load image for canvas:", src, e);
-            };
             setImgSize({width: imgWidth, height: imgHeight});
             let finalWidth = 1280;
             let finalHeight = 720;
-            const maxWidth = window.innerWidth - 200;
-            const maxHeight = window.innerHeight - 200;
 
             finalWidth = imgWidth * 100;
             finalHeight = imgHeight * 100;
+            const maxHeight = window.innerHeight;
 
             if (finalHeight > maxHeight) {
                 finalHeight = maxHeight;
@@ -349,7 +342,8 @@ const reDraw = useCallback(() => {
             // 画像をcanvasに描画
             imgCtx.drawImage(img, 0, 0, imgCanvas.width, imgCanvas.height);
         };
-    }, [src, clearCanvas]);
+
+    }, [src, clearCanvas, maxWidth]);
 
     // セーブ、クリア、undo、redo用のuseEffect
     useEffect(() => {
@@ -468,7 +462,7 @@ const reDraw = useCallback(() => {
                 {/* 背景画像用Canvas */}
                 <canvas
                     ref={imgCanvasRef}
-                    width={1280}
+                    width={1440}
                     height={720}
                     className="absolute top-0 left-0"
                     style={{
@@ -479,8 +473,8 @@ const reDraw = useCallback(() => {
                 {/* 描画用Canvas */}
                 <canvas
                     ref={canvasRef}
-                    width={1280}
-                    height={720}
+                    width={imgSize.width}
+                    height={imgSize.height}
                     className="absolute top-0 left-0 border-white border-2"
                     style={{
                         width: `${viewCanvasSize.width}px`,
