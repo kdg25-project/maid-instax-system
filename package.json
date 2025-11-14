@@ -15,11 +15,16 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "js-cookie": "^3.0.5",
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^9.4.0",
+    "@types/three": "^0.181.0",
+    "framer-motion": "^12.23.24",
     "lucide-react": "^0.553.0",
     "next": "16.0.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "tailwind-merge": "^3.4.0"
+    "three": "^0.181.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
