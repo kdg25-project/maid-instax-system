@@ -49,9 +49,38 @@ async function getMaid(maidId: string) {
 
 export default async function Page({ params }: Props) {
     const { userId } = await params;
-    const imagesrc = await fetchInstaxImage(userId);
+    const imagesrc = await fetchInstaxImage(userId).catch(() => null);
     const user: UserRes = await getUser(userId);
-    const maidRes: MaidRes = await getMaid(user.data.maid_id);
+
+    // ユーザーが存在しない、もしくは取得に失敗した場合
+    if (!user || !user.succe_s || !user.data) {
+        return (
+            <div className="min-h-screen bg-fixed bg-linear-to-bl from-[#A8EAEF] via-[#E7D1D9] to-[#FBAFB7]">
+                <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col gap-6 px-5 py-8 sm:max-w-lg sm:px-6 sm:py-10">
+                    <section className="p-6 pb-3">
+                        <div className="flex flex-col gap-6">
+                            <div className="m-auto">
+                                <Image src={"/Maid-Cafe_Logo.png"} alt="Maid Cafe Logo" width={200} height={80} className="mx-auto sm:mx-0" />
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="p-6 text-center">
+                        <div className="space-y-3">
+                            <p className="text-xl font-bold text-[#E54268] tracking-wide sm:text-2xl">ユーザー情報が見つかりません</p>
+                            <p className="text-base text-[#7A4E4E]">
+                                入力いただいたQRコード（ユーザーID）が無効か、既に無効化されています。QRコードをスキャンし直してください。
+                            </p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        );
+    }
+
+    const maidRes: MaidRes | null = user.data.maid_id
+        ? await getMaid(user.data.maid_id).catch(() => null)
+        : null;
 
     const isReady = Boolean(user.data.status == "instax_complete" || user.data.status == "leaving");
 
@@ -73,9 +102,9 @@ export default async function Page({ params }: Props) {
                 <section className="relative overflow-hidden">
                     <div className="relative z-0 mx-auto aspect-3/4 w-full h-full overflow-hidden">
                         <InstaxCard
-                            imageSrc={imagesrc}
+                            imageSrc={imagesrc ?? "/placeholder.png"}
                             isReady={isReady}
-                            maidName={maidRes.data.name}
+                            maidName={maidRes?.data?.name ?? "担当メイド"}
                             userName={user.data.name + user.data.honorific}
                         />
                     </div>
