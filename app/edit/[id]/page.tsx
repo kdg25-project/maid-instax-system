@@ -139,16 +139,18 @@ export default function Page({ params }: Props) {
                         />
                     </div>
                 </div>
+                <div className="h-[300px]">
+                    <Slider
+                        min={5}
+                        max={60}
+                        step={0.1}
+                        value={[lineWidth]}
+                        className="w-8 flex-1 mx-4"
+                        orientation="vertical"
+                        onValueChange={(value) => setLineWidth(value[0])}
+                    />
+                </div>
 
-                <Slider
-                    min={5}
-                    max={60}
-                    step={0.1}
-                    value={[lineWidth]}
-                    className="w-[100px] m-10"
-                    orientation="vertical"
-                    onValueChange={(value) => setLineWidth(value[0])}
-                />
                 <Draw
                     src={imgUrl}
                     penColor={penColor}
