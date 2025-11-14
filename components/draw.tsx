@@ -9,9 +9,9 @@ import React, { useRef, useState, useEffect, useCallback, Dispatch, SetStateActi
 ----------------
 -- drawOption --
 
-1 = 消しゴム
-2 = ペン
-3 = グロー
+0 = 消しゴム
+1 = ペン
+2 = グロー
 ----------------
 -- penColor --
 whiteなどの色文字列または#ffffffのようなカラーコード
@@ -31,6 +31,9 @@ whiteなどの色文字列または#ffffffのようなカラーコード
 -- isClear --
 親コンポーネントから渡されるクリアトリガー用フラグ(state)
 ----------------
+-- maxWidth --
+画像の横幅の最大サイズ
+--------------
 -- setImgData --
 親コンポーネントに画像データを渡すための関数(stateのsetter)
 ----------------
@@ -130,6 +133,9 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         currentLineWidth: number
     ) => {
         // -----描画オプション-----
+        ctx.lineWidth = Math.round((currentLineWidth / 15) ** 2);
+        ctx.lineCap = "round";
+
         switch (currentDrawOption) {
             case 0: // 消しゴム
                 ctx.globalCompositeOperation = "destination-out";
@@ -143,13 +149,11 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
                 ctx.globalCompositeOperation = "source-over";
                 ctx.strokeStyle = "#ffffff";
                 ctx.shadowColor = currentPenColor;
-                ctx.shadowBlur = 1.5 * currentLineWidth / 10;
+                ctx.shadowBlur = 1.5 * ctx.lineWidth
                 break;
             default:
                 ctx.globalCompositeOperation = "source-over";
         }
-        ctx.lineWidth = currentLineWidth / 10;
-        ctx.lineCap = "round";
         // ----------------------
 
         // 線分の長さを計算
