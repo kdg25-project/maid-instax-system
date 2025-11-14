@@ -155,7 +155,7 @@ export default function Page({ params }: Props) {
                 </div>
                 <div className="h-[300px]">
                     <Slider
-                        min={5}
+                        min={15}
                         max={60}
                         step={0.1}
                         value={[lineWidth]}

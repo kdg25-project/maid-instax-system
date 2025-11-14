@@ -130,6 +130,10 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         currentLineWidth: number
     ) => {
         // -----描画オプション-----
+        ctx.lineWidth = Math.round((currentLineWidth / 15) ** 2);
+        ctx.lineCap = "round";
+        console.log(ctx.lineWidth)
+
         switch (currentDrawOption) {
             case 0: // 消しゴム
                 ctx.globalCompositeOperation = "destination-out";
@@ -143,13 +147,11 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
                 ctx.globalCompositeOperation = "source-over";
                 ctx.strokeStyle = "#ffffff";
                 ctx.shadowColor = currentPenColor;
-                ctx.shadowBlur = 1.5 * currentLineWidth / 10;
+                ctx.shadowBlur = 1.5 * ctx.lineWidth
                 break;
             default:
                 ctx.globalCompositeOperation = "source-over";
         }
-        ctx.lineWidth = currentLineWidth / 10;
-        ctx.lineCap = "round";
         // ----------------------
 
         // 線分の長さを計算
