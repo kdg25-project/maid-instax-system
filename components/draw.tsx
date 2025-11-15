@@ -153,12 +153,12 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
                 break;
             default:
                 ctx.globalCompositeOperation = "source-over";
-        }
-        // ----------------------
+        }        // ----------------------
 
         // 線分の長さを計算
+        // (一時的に無効化)
         const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-        const MIN_MOVE_DISTANCE = 4;
+        const MIN_MOVE_DISTANCE = 0;
 
         if (distance <= MIN_MOVE_DISTANCE) {
             ctx.shadowBlur = 0;
