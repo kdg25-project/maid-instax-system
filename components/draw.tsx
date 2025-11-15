@@ -195,7 +195,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
         const item = history.at(index);
 
         if (item) {
-            ctx.lineWidth = item.lineWidth / 10;
+            ctx.lineWidth = Math.round((lineWidth / 15) ** 2);
             item.coordinates.forEach((coord) => {
 
                 ctx.beginPath();
@@ -204,7 +204,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
                 ctx.stroke();
                 ctx.closePath();
                 ctx.globalCompositeOperation = "source-over";
-                ctx.lineWidth = item.lineWidth / 10;
+                ctx.lineWidth = Math.round((lineWidth / 15) ** 2);
                 ctx.beginPath();
                 ctx.moveTo(coord.start_x, coord.start_y);
                 ctx.lineTo(coord.end_x, coord.end_y);
@@ -213,7 +213,7 @@ export const Draw = ({ className,src, penColor = "white", drawOption = 1, lineWi
             });
             ctx.globalCompositeOperation = old_op;
         };
-    }, []);
+    }, [lineWidth]);
 
     const clearCanvas = useCallback((isReset = false) => {
         const canvas = canvasRef.current;
